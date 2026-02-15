@@ -24,7 +24,7 @@ export const generateShareImage = async (data: SharePreviewData): Promise<Blob |
     if (sourceEl) {
       try {
         const container = document.createElement('div');
-        container.style.cssText = `position: fixed; left: -9999px; top: -9999px; width: 1080px; height: 1920px; background: linear-gradient(180deg, #ffffff 0%, #fbf7ff 100%); padding: 48px; box-sizing: border-box; display:flex; align-items:center; justify-content:center;`;
+        container.style.cssText = `position: absolute; left: -10000px; top: -10000px; width: 1080px; height: 1920px; background: linear-gradient(180deg, #ffffff 0%, #fbf7ff 100%); padding: 48px; box-sizing: border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;`;
 
         // clone du node source pour conserver classes/tailwind
         const clone = sourceEl.cloneNode(true) as HTMLElement;
@@ -42,10 +42,10 @@ export const generateShareImage = async (data: SharePreviewData): Promise<Blob |
         clone.style.margin = '0 auto';
 
         // Assurer que le clone est lisible et centré
-        const innerWrapper = document.createElement('div');
-        innerWrapper.style.cssText = 'width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;';
-        innerWrapper.appendChild(clone);
-        container.appendChild(innerWrapper);
+        clone.style.display = 'flex';
+        clone.style.flexDirection = 'column';
+        clone.style.alignItems = 'center';
+        container.appendChild(clone);
         document.body.appendChild(container);
 
         // shrink-to-fit utility: réduit la taille de police jusqu'à ce que le contenu tienne

@@ -115,7 +115,7 @@ export default function DayReadingViewer({ reading, onClose }: DayReadingViewerP
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 overflow-auto">
-      <div className="bg-background min-h-screen p-4 md:p-6">
+      <div className="bg-background min-h-screen p-4 md:p-6 text-foreground">
         <div className="max-w-4xl mx-auto">
           {/* Header simplifié */}
           <div className="flex items-start gap-3 mb-6">
@@ -144,7 +144,7 @@ export default function DayReadingViewer({ reading, onClose }: DayReadingViewerP
             <div className="pr-4 space-y-8 pb-8">
               {/* Contenu riche */}
               {reading.comment && (
-                <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20">
+                <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20 text-slate-100 dark:text-slate-100">
                   {renderContent(reading.comment)}
                 </div>
               )}
@@ -170,11 +170,11 @@ export default function DayReadingViewer({ reading, onClose }: DayReadingViewerP
               </div>
 
               {/* Info de lecture */}
-              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 mt-8">
-                <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 mt-8 text-blue-900 dark:text-blue-100">
+                <h3 className="font-bold mb-3 flex items-center gap-2">
                   💡 Comment continuer
                 </h3>
-                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                <ul className="text-sm space-y-2">
                   <li>✓ Cliquez sur un chapitre ci-dessus pour lire les versets</li>
                   <li>✓ Prenez votre temps - c'est un voyage spirituel</li>
                   <li>✓ Méditez sur ce que Dieu vous dit</li>

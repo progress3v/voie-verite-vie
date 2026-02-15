@@ -80,11 +80,11 @@ const CheminDeCroix = memo(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:bg-slate-950 dark:text-slate-100">
       <Navigation />
 
       {/* Hero Section */}
-      <header className="bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white pt-20 pb-12 px-4 relative overflow-hidden">
+      <header className="bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white pt-20 pb-12 px-4 relative overflow-hidden dark:from-purple-950 dark:via-purple-900 dark:to-purple-950">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
         </div>
@@ -104,7 +104,7 @@ const CheminDeCroix = memo(() => {
 
       <main className="container mx-auto px-3 sm:px-4 py-8 md:py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 p-1 rounded-lg">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 p-1 rounded-lg dark:bg-slate-800">
             <TabsTrigger value="intro" className="text-xs sm:text-sm">📖 Intro</TabsTrigger>
             <TabsTrigger value="stations" className="text-xs sm:text-sm">✝️ Stations</TabsTrigger>
             <TabsTrigger value="conclusion" className="text-xs sm:text-sm">✨ Conclusion</TabsTrigger>
@@ -189,7 +189,7 @@ const CheminDeCroix = memo(() => {
                 <p className="text-sm leading-relaxed text-gray-700">
                   {cheminDeCroixData.conclusion.text}
                 </p>
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200 p-4 rounded-lg">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200 p-4 rounded-lg dark:bg-gradient-to-br dark:from-purple-950 dark:to-purple-900/50 dark:border-purple-800">
                   <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm text-gray-800">
                     {cheminDeCroixData.conclusion.prayer}
                   </p>
@@ -209,7 +209,7 @@ const CheminDeCroix = memo(() => {
 
       {/* Station Detail Dialog */}
       <Dialog open={!!selectedStation} onOpenChange={(open) => { if (!open) setSelectedStation(null); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent id={selectedStation ? 'share-source' : undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-xl">
               <div className="flex items-center gap-3 mb-2">
@@ -217,8 +217,8 @@ const CheminDeCroix = memo(() => {
                   {String(selectedStation?.number).padStart(2, '0')}
                 </span>
                 <div>
-                  <h2 className="text-lg">{selectedStation?.title}</h2>
-                  <p className="text-xs text-gray-500">{selectedStation?.reading}</p>
+                  <h2 className="text-lg dark:text-slate-100">{selectedStation?.title}</h2>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">{selectedStation?.reading}</p>
                 </div>
               </div>
             </DialogTitle>
@@ -226,28 +226,28 @@ const CheminDeCroix = memo(() => {
 
           <div className="space-y-4 py-4">
             {/* Adoration Text */}
-            <div className="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg text-center">
-              <p className="text-sm font-semibold text-purple-900 leading-relaxed whitespace-pre-line">
+            <div className="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg text-center dark:bg-purple-950 dark:border-purple-700 dark:text-slate-100">
+              <p className="text-sm font-semibold text-purple-900 leading-relaxed whitespace-pre-line dark:text-purple-100">
                 {cheminDeCroixData.adoration}
               </p>
             </div>
 
             {/* Biblical Text */}
-            <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded">
-              <p className="text-sm italic text-gray-700">"{selectedStation?.text}"</p>
+            <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded dark:bg-purple-950 dark:border-l-4 dark:border-purple-600 dark:text-slate-100">
+              <p className="text-sm italic text-gray-700 dark:text-slate-300">"{ selectedStation?.text}"</p>
             </div>
 
             {/* Meditation */}
             <div>
-              <h3 className="text-sm font-semibold text-purple-900 mb-2">💭 Méditation</h3>
-              <p className="text-sm leading-relaxed text-gray-700">{selectedStation?.meditation}</p>
+              <h3 className="text-sm font-semibold text-purple-900 mb-2 dark:text-purple-100">💭 Méditation</h3>
+              <p className="text-sm leading-relaxed text-gray-700 dark:text-slate-300">{selectedStation?.meditation}</p>
             </div>
 
             {/* Prayer */}
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200 p-4 rounded-lg">
-              <h3 className="text-sm font-semibold text-purple-900 mb-2">🙏 Prière</h3>
-              <p className="text-sm italic text-purple-900">{selectedStation?.prayer}</p>
-              <p className="text-xs text-purple-700 mt-3 pt-2 border-t border-purple-200">
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200 p-4 rounded-lg dark:bg-gradient-to-br dark:from-purple-950 dark:to-purple-900/50 dark:border-purple-800">
+              <h3 className="text-sm font-semibold text-purple-900 mb-2 dark:text-purple-100">🙏 Prière</h3>
+              <p className="text-sm italic text-purple-900 dark:text-purple-200">{selectedStation?.prayer}</p>
+              <p className="text-xs text-purple-700 mt-3 pt-2 border-t border-purple-200 dark:text-purple-300 dark:border-purple-800">
                 Notre Père... • Je vous salue Marie...
               </p>
             </div>

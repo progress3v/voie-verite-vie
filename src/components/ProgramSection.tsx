@@ -168,7 +168,7 @@ const ProgramSection = () => {
                   ))}
                 </div>
                 
-                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3 dark:bg-slate-800 dark:text-slate-100">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">Livres étudiés</span>
                     <Badge variant="secondary">

@@ -53,6 +53,7 @@ export const siteLinks: SiteCategory[] = [
     title: 'Outils',
     items: [
       { name: 'Assistant IA', href: '/ai-chat', icon: 'Bot' },
+      { name: 'Paramètres', href: '/settings', icon: 'Settings' },
     ],
   },
 ];

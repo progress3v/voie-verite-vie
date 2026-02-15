@@ -38,7 +38,7 @@ const AdminCheminDeCroix = () => {
   const [programContent, setProgramContent] = useState<CheminProgram | null>(null);
   const [formData, setFormData] = useState({
     title: 'Chemin de Croix',
-    subtitle: 'Carême 2025 — 14 stations de méditation',
+    subtitle: '14 stations de méditation',
     community: 'Communauté Voie, Vérité, Vie',
     verse: '"Je suis le Chemin, la Vérité et la Vie" - Jean 14,6',
     duration: '20 minutes',
@@ -70,7 +70,7 @@ const AdminCheminDeCroix = () => {
         setProgramContent(data as CheminProgram);
         setFormData({
           title: data.title || 'Chemin de Croix',
-          subtitle: data.subtitle || 'Carême 2025 — 14 stations de méditation',
+          subtitle: data.subtitle || '14 stations de méditation',
           community: '',
           verse: '',
           duration: ''
@@ -223,8 +223,8 @@ const AdminCheminDeCroix = () => {
 
         <div className="grid gap-6">
           {/* Section 1: Informations générales */}
-          <Card className="border-purple-100">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100/50">
+          <Card className="border-purple-100 dark:border-purple-800">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100/50 dark:bg-gradient-to-r dark:from-purple-950 dark:to-purple-900/50">
               <CardTitle>Informations générales</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -246,7 +246,7 @@ const AdminCheminDeCroix = () => {
                       id="subtitle"
                       value={formData.subtitle}
                       onChange={(e) => handleFormChange('subtitle', e.target.value)}
-                      placeholder="Carême 2025 — 14 stations"
+                      placeholder="Chemin de Croix"
                       className="mt-1"
                     />
                   </div>
@@ -303,7 +303,7 @@ const AdminCheminDeCroix = () => {
 
           {/* Section 2: Gestion des stations */}
           <Card className="border-purple-100">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100/50 flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100/50 flex flex-row items-center justify-between space-y-0 dark:bg-gradient-to-r dark:from-purple-950 dark:to-purple-900/50">
               <CardTitle>Stations ({stations.length})</CardTitle>
               <Dialog open={showStationDialog} onOpenChange={setShowStationDialog}>
                 <DialogTrigger asChild>
@@ -411,7 +411,7 @@ const AdminCheminDeCroix = () => {
               ) : (
                 <div className="space-y-2">
                   {stations.map((station, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200">
+                    <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-600 dark:text-slate-100">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <div className="font-bold text-purple-700 text-lg w-8">
@@ -441,7 +441,7 @@ const AdminCheminDeCroix = () => {
                               <DialogTitle>{previewingStation?.title}</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
-                            <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded">
+                            <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded dark:bg-purple-950 dark:border-purple-700 dark:text-slate-100">
                               <p className="text-sm italic">{previewingStation?.text}</p>
                             </div>
                             <div>
@@ -482,13 +482,13 @@ const AdminCheminDeCroix = () => {
           </Card>
 
           {/* Section 3: Statistiques */}
-          <Card className="border-purple-100 bg-gradient-to-br from-purple-50 to-purple-100/50">
+          <Card className="border-purple-100 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:border-purple-800 dark:bg-gradient-to-br dark:from-purple-950 dark:to-purple-900/50">
             <CardHeader>
               <CardTitle>Résumé</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                <div className="bg-white p-4 rounded-lg border border-purple-200 dark:bg-slate-900 dark:border-purple-800 dark:text-slate-100">
                   <div className="text-2xl font-bold text-purple-700">{stations.length}</div>
                   <div className="text-sm text-gray-600">Stations disponibles</div>
                 </div>

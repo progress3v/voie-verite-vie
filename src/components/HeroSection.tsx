@@ -111,7 +111,7 @@ const HeroSection = () => {
   }, [biblicalVerses.length]);
 
   return (
-    <section className="hero-section min-h-screen flex items-center relative pt-16">
+    <section className="hero-section min-h-screen flex items-center relative pt-16 dark:bg-slate-950 dark:text-slate-100">
       {/* Image de fond */}
       <div className="absolute inset-0 z-0">
         <img
@@ -126,11 +126,11 @@ const HeroSection = () => {
         <div className="max-w-4xl mx-auto text-center">
           {/* Logo et titre principal */}
           <div className="fade-in-up mb-8">
-            <div className="inline-flex items-center justify-center mb-6">
+            <div className="inline-flex items-center justify-center mb-6 dark:bg-transparent dark:shadow-none">
               <img 
                 src={logo3v} 
                 alt="Logo 3V - Voie, Vérité, Vie" 
-                className="h-32 w-auto divine-glow"
+                className="h-32 w-auto divine-glow dark:shadow-none dark:drop-shadow-none"
               />
             </div>
             <h1 className="text-5xl md:text-7xl font-playfair font-bold text-foreground mb-4">
@@ -141,12 +141,12 @@ const HeroSection = () => {
 
           {/* Personalized greeting box (only for logged in users) */}
           {user && (
-            <div className="fade-in-up mb-8 p-4 bg-white/70 backdrop-blur-sm rounded-xl shadow-md max-w-xl mx-auto" style={{ animationDelay: '0.25s' }}>
-              <p className="text-base md:text-lg font-medium text-foreground">
+            <div className="fade-in-up mb-8 p-4 bg-white/70 backdrop-blur-sm rounded-xl shadow-md max-w-xl mx-auto dark:bg-slate-900/80 dark:text-slate-100" style={{ animationDelay: '0.25s' }}>
+              <p className="text-base md:text-lg font-medium text-foreground dark:text-slate-100">
                 {getTimeGreeting()}
                 {userName ? `, ${userName}` : ''} {place ? `(${place})` : ''}
               </p>
-              <p className="text-sm text-muted-foreground">{intention}</p>
+              <p className="text-sm text-muted-foreground dark:text-slate-300">{intention}</p>
             </div>
           )}
 
@@ -162,13 +162,13 @@ const HeroSection = () => {
           </div>
 
           {/* Verset biblique rotatif */}
-          <div className="fade-in-up mb-12 p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg max-w-3xl mx-auto" style={{ animationDelay: '0.6s' }}>
+          <div className="fade-in-up mb-12 p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg max-w-3xl mx-auto border border-primary/20 dark:bg-slate-900/90 dark:border-slate-700 dark:text-slate-100" style={{ animationDelay: '0.6s' }}>
             <div className="min-h-[120px] flex items-center justify-center">
               <div key={currentVerse} className="fade-in text-center">
-                <blockquote className="verse-highlight text-lg md:text-xl mb-4 leading-relaxed">
+                <blockquote className="verse-highlight text-lg md:text-xl mb-4 leading-relaxed dark:text-slate-100">
                   {biblicalVerses[currentVerse].text}
                 </blockquote>
-                <cite className="text-divine-gold-deep font-medium">
+                <cite className="text-divine-gold-deep font-medium dark:text-divine-gold">
                   — {biblicalVerses[currentVerse].reference}
                 </cite>
               </div>
@@ -212,7 +212,7 @@ const HeroSection = () => {
           </div>
 
           {/* Statistiques inspirantes */}
-          <div className="fade-in-up mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto" style={{ animationDelay: '1.2s' }}>
+            <div className="fade-in-up mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto dark:text-slate-100" style={{ animationDelay: '1.2s' }}>
             <div className="text-center">
               <div className="text-3xl font-bold text-primary mb-2">73</div>
               <div className="text-sm text-muted-foreground">Livres de la Bible</div>

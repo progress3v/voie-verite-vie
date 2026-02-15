@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
+import { SettingsProvider } from "@/hooks/useSettings";
 import LoadingScreen from "@/components/LoadingScreen";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +26,7 @@ import AIChat from "./pages/AIChat";
 import PrayerForum from "./pages/PrayerForum";
 import Careme2026 from "./pages/Careme2026";
 import CheminDeCroix from "./pages/CheminDeCroix";
+import ShareDebug from "./pages/ShareDebug";
 import Admin from "./pages/Admin";
 import AdminReadings from "./pages/admin/AdminReadings";
 import AdminPrayers from "./pages/admin/AdminPrayers";
@@ -39,6 +41,7 @@ import AdminAI from "./pages/admin/AdminAI";
 import AdminCareme2026 from "./pages/admin/AdminCareme2026";
 import AdminCheminDeCroix from "./pages/admin/AdminCheminDeCroix";
 import Creator from "./pages/Creator";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -100,11 +103,12 @@ const App = () => {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          {isLoading && <LoadingScreen />}
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppNotificationInitializer>
+          <SettingsProvider>
+            {isLoading && <LoadingScreen />}
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppNotificationInitializer>
               <ScrollToTop />
               <Routes>
               <Route path="/" element={<Index />} />
@@ -121,6 +125,8 @@ const App = () => {
               <Route path="/prayer-forum" element={<PrayerForum />} />
               <Route path="/careme-2026" element={<Careme2026 />} />
               <Route path="/chemin-de-croix" element={<CheminDeCroix />} />
+              <Route path="/share-debug" element={<ShareDebug />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/createur" element={<Creator />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/home" element={<AdminHome />} />
@@ -137,8 +143,9 @@ const App = () => {
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </AppNotificationInitializer>
-          </BrowserRouter>
+              </AppNotificationInitializer>
+            </BrowserRouter>
+          </SettingsProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </HelmetProvider>

@@ -244,8 +244,8 @@ const AdminCareme2026 = () => {
 
         <div className="grid gap-6">
           {/* Section 1: Informations générales */}
-          <Card className="border-violet-100">
-            <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50">
+          <Card className="border-violet-100 dark:border-violet-800">
+            <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50 dark:bg-gradient-to-r dark:from-violet-950 dark:to-violet-900/50">
               <CardTitle>Informations générales</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -288,7 +288,7 @@ const AdminCareme2026 = () => {
 
           {/* Section 2: Gestion des jours */}
           <Card className="border-violet-100">
-            <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50 flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50 flex flex-row items-center justify-between space-y-0 dark:bg-gradient-to-r dark:from-violet-950 dark:to-violet-900/50">
               <CardTitle>Jours du programme ({daysData.length})</CardTitle>
               <Dialog open={showDayDialog} onOpenChange={setShowDayDialog}>
                 <DialogTrigger asChild>
@@ -411,7 +411,7 @@ const AdminCareme2026 = () => {
               ) : (
                 <div className="space-y-2">
                   {daysData.map((day, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200">
+                    <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-600 dark:text-slate-100">
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900 text-sm">{day.date}</div>
                         {day.title && <div className="text-xs text-violet-700 font-semibold">{day.title}</div>}
@@ -443,7 +443,7 @@ const AdminCareme2026 = () => {
                                 </div>
                               )}
                               <div className="grid gap-4 mt-4">
-                                <div className="bg-violet-50 p-3 rounded-lg">
+                                <div className="bg-violet-50 p-3 rounded-lg dark:bg-violet-950 dark:text-slate-100">
                                   <p className="text-xs font-semibold text-violet-700 mb-1">🪞 Soi</p>
                                   <p className="text-sm">{day.actions.soi}</p>
                                 </div>
@@ -486,23 +486,23 @@ const AdminCareme2026 = () => {
           </Card>
 
           {/* Section 3: Statistiques */}
-          <Card className="border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/50">
+          <Card className="border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/50 dark:border-violet-800 dark:bg-gradient-to-br dark:from-violet-950 dark:to-violet-900/50">
             <CardHeader>
-              <CardTitle>Résumé du programme</CardTitle>
+              <CardTitle>Résumé</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-violet-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-4 rounded-lg border border-violet-100 dark:bg-slate-900 dark:border-violet-800 dark:text-slate-100">
                   <div className="text-2xl font-bold text-violet-700">{daysData.length}</div>
-                  <div className="text-sm text-gray-600">Jours programmés</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-300">Jours programmés</div>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-violet-100">
+                <div className="bg-white p-4 rounded-lg border border-violet-100 dark:bg-slate-900 dark:border-violet-800 dark:text-slate-100">
                   <div className="text-2xl font-bold text-violet-700">{daysData.filter(d => d.title).length}</div>
-                  <div className="text-sm text-gray-600">Jours avec titre spécial</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-300">Jours avec titre spécial</div>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-violet-100">
+                <div className="bg-white p-4 rounded-lg border border-violet-100 dark:bg-slate-900 dark:border-violet-800 dark:text-slate-100">
                   <div className="text-2xl font-bold text-violet-700">40</div>
-                  <div className="text-sm text-gray-600">Jours requis</div>
+                  <div className="text-sm text-gray-600 dark:text-slate-300">Jours requis</div>
                 </div>
               </div>
             </CardContent>

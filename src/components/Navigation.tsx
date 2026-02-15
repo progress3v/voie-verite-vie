@@ -16,7 +16,10 @@ import {
   Heart,
   Shield,
   Download,
-  ChevronDown
+  ChevronDown,
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const ICONS: Record<string, any> = {
@@ -30,8 +33,10 @@ const ICONS: Record<string, any> = {
   Mail,
   Download,
   Bot,
+  Settings,
 };
 import { useAuth } from '@/hooks/useAuth';
+import { useSettings } from '@/hooks/useSettings';
 import siteLinks from '@/data/site-links';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,6 +55,7 @@ const Navigation = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const { user, signOut } = useAuth();
+  const { settings, setTheme, isDarkMode } = useSettings();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -157,9 +163,24 @@ const Navigation = () => {
           </div>
 
           {/* Actions Desktop */}
-          <div className="hidden lg:flex items-center space-x-2">
+          <div className="hidden lg:flex items-center gap-2">
             {/* Notification Bell */}
             <NotificationBell />
+
+            {/* Theme Toggle */}
+            <Button
+              onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              title={isDarkMode ? 'Passer au mode clair' : 'Passer au mode sombre'}
+            >
+              {isDarkMode ? (
+                <Sun className="w-4 h-4 text-amber-500" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600" />
+              )}
+            </Button>
 
             {/* Install button */}
             <Button
@@ -265,6 +286,25 @@ const Navigation = () => {
                 })}
               </div>
                 <div className="border-t border-border/50 pt-4 space-y-2">
+                  {/* Theme Toggle Mobile */}
+                  <Button
+                    onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
+                    variant="ghost"
+                    className="w-full justify-start gap-2"
+                  >
+                    {isDarkMode ? (
+                      <>
+                        <Sun className="w-4 h-4 text-amber-500" />
+                        Mode clair
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="w-4 h-4 text-slate-600" />
+                        Mode sombre
+                      </>
+                    )}
+                  </Button>
+
                   {/* Install button mobile */}
                   <Button
                     onClick={() => {

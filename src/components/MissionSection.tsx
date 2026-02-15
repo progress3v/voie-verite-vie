@@ -73,8 +73,8 @@ const MissionSection = () => {
                 className="fade-in-up spiritual-card text-center group hover:scale-105 transition-all duration-500"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-white to-gray-50 mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                  <Icon className={`w-8 h-8 ${mission.color}`} />
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-white to-gray-50 mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-700`}>
+                  <Icon className={`w-8 h-8 ${mission.color} dark:text-white`} />
                 </div>
                 <h3 className="text-2xl font-playfair font-semibold mb-4 text-foreground">
                   {mission.title}
@@ -82,7 +82,7 @@ const MissionSection = () => {
                 <p className="text-muted-foreground mb-4 leading-relaxed">
                   {mission.description}
                 </p>
-                <div className={`italic text-sm ${mission.color} font-medium`}>
+                <div className={`italic text-sm ${mission.color} font-medium dark:text-white`}>
                   "{mission.verse}"
                 </div>
               </div>
@@ -136,7 +136,7 @@ const MissionSection = () => {
 
         {/* Citation inspirante */}
         <div className="mt-16 text-center">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 max-w-4xl mx-auto shadow-lg">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 max-w-4xl mx-auto shadow-lg dark:bg-slate-900/80 dark:text-slate-100">
             <blockquote className="text-xl md:text-2xl font-playfair text-primary mb-4 leading-relaxed italic">
               "Voie, Vérité, Vie se tient comme un phare dans les ténèbres, 
               offrant un refuge spirituel et une éducation morale pour aider 

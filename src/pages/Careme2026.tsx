@@ -219,11 +219,11 @@ const Careme2026 = memo(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:bg-slate-950 dark:text-slate-100">
       <Navigation />
 
       {/* Hero Section */}
-      <header className="bg-gradient-to-br from-violet-700 via-violet-600 to-violet-800 text-white pt-20 pb-12 px-4 relative overflow-hidden">
+      <header className="bg-gradient-to-br from-violet-700 via-violet-600 to-violet-800 text-white pt-20 pb-12 px-4 relative overflow-hidden dark:from-violet-900 dark:via-violet-800 dark:to-violet-900">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
         </div>
@@ -268,10 +268,10 @@ const Careme2026 = memo(() => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-3 mb-6 bg-slate-100 p-1 rounded-lg">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm">📅 Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="calendar" className="text-xs sm:text-sm">📋 Calendrier</TabsTrigger>
-            <button onClick={() => navigate('/chemin-de-croix')} className="flex gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-md px-3 py-1.5 text-xs sm:text-sm justify-center items-center transition-colors">✝️ Chemin de Croix</button>
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-3 mb-6 bg-slate-100 p-1 rounded-lg dark:bg-slate-800 gap-1">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm px-0 sm:px-3">📅 Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-xs sm:text-sm px-0 sm:px-3">📋 Calendrier</TabsTrigger>
+            <button onClick={() => navigate('/chemin-de-croix')} className="flex gap-1 sm:gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm justify-center items-center transition-colors whitespace-nowrap">✝️ <span className="hidden sm:inline">Chemin de Croix</span><span className="sm:hidden">Chemin</span></button>
           </TabsList>
 
           {/* Overview Tab */}
@@ -279,14 +279,14 @@ const Careme2026 = memo(() => {
             <div className="grid gap-6 md:grid-cols-2">
               {/* The 3 Pillars */}
               <Card className="border-violet-200">
-                <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50">
+                <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50 dark:bg-gradient-to-r dark:from-violet-950 dark:to-violet-900/50">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Flame className="w-5 h-5 text-violet-600" />
                     Les 3 Piliers
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-3">
-                  <div className="flex gap-3 items-start p-3 bg-violet-50 rounded-lg">
+                  <div className="flex gap-3 items-start p-3 bg-violet-50 rounded-lg dark:bg-violet-950 dark:text-slate-100">
                     <BookOpen className="w-5 h-5 text-violet-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold text-sm">Prière</p>
@@ -312,7 +312,7 @@ const Careme2026 = memo(() => {
 
               {/* Daily Rhythm */}
               <Card className="border-slate-200">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 dark:bg-gradient-to-r dark:from-blue-950 dark:to-blue-900/50">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Calendar className="w-5 h-5 text-blue-600" />
                     Rythme quotidien
@@ -381,7 +381,7 @@ const Careme2026 = memo(() => {
             <div className="space-y-4">
               {caremeData.fullProgram.map((week, weekIdx) => (
                 <Card key={weekIdx} className="border-violet-100">
-                  <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50 pb-3">
+                  <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50 pb-3 dark:bg-gradient-to-r dark:from-violet-950 dark:to-violet-900/50">
                     <div className="flex items-center justify-between gap-2">
                       <CardTitle className="text-base sm:text-lg">{week.title}</CardTitle>
                       <span className="text-xs sm:text-sm text-gray-600">{week.range}</span>
@@ -400,8 +400,8 @@ const Careme2026 = memo(() => {
                             onClick={() => !isSun && setSelectedDay({ ...day, dateObj })}
                             className={`p-3 rounded-lg text-left transition-all active:scale-95 ${
                               isSun
-                                ? 'bg-gray-50 border border-gray-200 cursor-default'
-                                : 'bg-white border-2 border-violet-100 hover:border-violet-400 hover:shadow-md cursor-pointer'
+                                ? 'bg-gray-50 border border-gray-200 cursor-default dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400'
+                                : 'bg-white border-2 border-violet-100 hover:border-violet-400 hover:shadow-md cursor-pointer dark:bg-slate-900 dark:border-violet-800 dark:text-slate-100'
                             } ${isCompleted ? 'ring-2 ring-green-400 ring-offset-1' : ''}`}
                           >
                             <div className="flex items-start justify-between gap-2">
@@ -427,7 +427,7 @@ const Careme2026 = memo(() => {
 
       {/* Day Detail Dialog */}
       <Dialog open={!!selectedDay} onOpenChange={(open) => { if (!open) setSelectedDay(null); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent id={selectedDay ? 'share-source' : undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-2xl">{selectedDay?.date}</DialogTitle>
             {selectedDay?.title && <p className="text-sm text-gray-600 mt-2">{selectedDay.title}</p>}
@@ -435,14 +435,14 @@ const Careme2026 = memo(() => {
 
           <div className="space-y-4 py-4">
             {selectedDay?.readings && (
-              <div className="bg-slate-50 p-3 rounded-lg">
+              <div className="bg-slate-50 p-3 rounded-lg dark:bg-slate-900 dark:text-slate-100">
                 <p className="text-xs font-semibold text-gray-700 mb-1">Lectures bibliques</p>
                 <p className="text-sm text-gray-700">{selectedDay.readings}</p>
               </div>
             )}
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-lg border-2 border-violet-200 p-4 bg-gradient-to-br from-violet-50 to-violet-100/30">
+              <div className="rounded-lg border-2 border-violet-200 p-4 bg-gradient-to-br from-violet-50 to-violet-100/30 dark:bg-gradient-to-br dark:from-violet-950 dark:to-violet-900/30 dark:border-violet-700 dark:text-slate-100">
                 <div className="flex items-center gap-2 mb-2">
                   <BookOpen className="w-5 h-5 text-violet-600" />
                   <h3 className="font-semibold text-sm text-violet-700">🪞 Soi</h3>
@@ -450,7 +450,7 @@ const Careme2026 = memo(() => {
                 <p className="text-sm text-gray-700">{selectedDay?.actions?.soi}</p>
               </div>
 
-              <div className="rounded-lg border-2 border-rose-200 p-4 bg-gradient-to-br from-rose-50 to-rose-100/30">
+              <div className="rounded-lg border-2 border-rose-200 p-4 bg-gradient-to-br from-rose-50 to-rose-100/30 dark:bg-gradient-to-br dark:from-rose-950 dark:to-rose-900/30 dark:border-rose-700 dark:text-slate-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Users className="w-5 h-5 text-rose-600" />
                   <h3 className="font-semibold text-sm text-rose-700">❤️ Prochain</h3>
@@ -458,7 +458,7 @@ const Careme2026 = memo(() => {
                 <p className="text-sm text-gray-700">{selectedDay?.actions?.prochain}</p>
               </div>
 
-              <div className="rounded-lg border-2 border-amber-200 p-4 bg-gradient-to-br from-amber-50 to-amber-100/30">
+              <div className="rounded-lg border-2 border-amber-200 p-4 bg-gradient-to-br from-amber-50 to-amber-100/30 dark:bg-gradient-to-br dark:from-amber-950 dark:to-amber-900/30 dark:border-amber-700 dark:text-slate-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Heart className="w-5 h-5 text-amber-600" />
                   <h3 className="font-semibold text-sm text-amber-700">🙏 Dieu</h3>

@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
   /* DARK MODE - MAPPING SUPPLÉMENTAIRE POUR LISIBILITÉ MAXIMALE */
   .dark .bg-white, .dark .bg-gray-50, .dark .bg-slate-50, .dark .bg-violet-50, .dark .bg-purple-50 {
     @apply bg-slate-900 !important;
@@ -89,11 +95,6 @@
   .dark .text-amber-700 { @apply text-amber-200 !important; }
   .dark .text-rose-600 { @apply text-rose-300 !important; }
   .dark .text-rose-700 { @apply text-rose-200 !important; }
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Système de design spirituel pour Voie, Vérité, Vie (3V)
 Couleurs apaisantes : bleu ciel (paix), vert (vie), blanc (pureté)

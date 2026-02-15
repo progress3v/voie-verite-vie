@@ -48,6 +48,7 @@ const CheminDeCroix = memo(() => {
   const shareStation = async () => {
     if (!selectedStation) return;
     try {
+      console.log('🔄 Génération image pour:', selectedStation.title);
       const station = selectedStation;
       
       // Générer l'image optimisée
@@ -62,16 +63,20 @@ const CheminDeCroix = memo(() => {
         type: 'station',
       });
 
+      console.log('📸 Blob généré:', blob ? `${blob.size} bytes` : 'null');
+
       if (blob) {
         // Partager l'image
+        console.log('📤 Partage en cours...');
         const shared = await shareImage(blob, `Station-${String(station.number).padStart(2, '0')}`);
-        if (!shared) {
-          alert('✝️ Image prête à être partagée sur vos réseaux!');
-        }
+        console.log('📊 Résultat partage:', shared);
+      } else {
+        console.error('❌ Erreur génération image');
+        alert('❌ Erreur: Image non générée. Vérifiez la console.');
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors du partage');
+      console.error('❌ Erreur:', error);
+      alert('❌ Erreur lors du partage');
     }
   };
 

@@ -34,6 +34,8 @@ import AdminContact from "./pages/admin/AdminContact";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminAbout from "./pages/admin/AdminAbout";
+import AdminAuthor from "./pages/admin/AdminAuthor";
+import AdminDesign from "./pages/admin/AdminDesign";
 import AdminActivities from "./pages/admin/AdminActivities";
 import AdminGallery from "./pages/admin/AdminGallery";
 import AdminFAQ from "./pages/admin/AdminFAQ";
@@ -131,6 +133,8 @@ const App = () => {
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/home" element={<AdminHome />} />
               <Route path="/admin/about" element={<AdminAbout />} />
+              <Route path="/admin/author" element={<AdminAuthor />} />
+              <Route path="/admin/design" element={<AdminDesign />} />
               <Route path="/admin/careme2026" element={<AdminCareme2026 />} />
               <Route path="/admin/chemin-de-croix" element={<AdminCheminDeCroix />} />
               <Route path="/admin/activities" element={<AdminActivities />} />

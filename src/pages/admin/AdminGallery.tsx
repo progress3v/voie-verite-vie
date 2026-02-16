@@ -118,8 +118,10 @@ const AdminGallery = () => {
         })
         .eq('id', editingImage.id);
       if (error) {
-        toast.error('Erreur lors de la modification');
+        console.error('❌ Update gallery error:', error);
+        toast.error('Erreur: ' + error.message);
       } else {
+        console.log('✅ Image modifiée');
         toast.success('Image modifiée');
       }
     } else {
@@ -147,8 +149,10 @@ const AdminGallery = () => {
         .insert(imagesToInsert);
       
       if (error) {
-        toast.error('Erreur lors de l\'ajout');
+        console.error('❌ Insert gallery error:', error);
+        toast.error('Erreur: ' + error.message);
       } else {
+        console.log('✅ Images ajoutées');
         toast.success(`${imagesToInsert.length} image(s) ajoutée(s)`);
       }
     }
@@ -173,9 +177,15 @@ const AdminGallery = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Supprimer cette image ?')) {
-      await supabase.from('gallery_images').delete().eq('id', id);
-      toast.success('Image supprimée');
-      loadImages();
+      const { error } = await supabase.from('gallery_images').delete().eq('id', id);
+      if (error) {
+        console.error('❌ Delete gallery error:', error);
+        toast.error('Erreur: ' + error.message);
+      } else {
+        console.log('✅ Image supprimée');
+        toast.success('Image supprimée');
+        loadImages();
+      }
     }
   };
 
@@ -185,6 +195,52 @@ const AdminGallery = () => {
       .update({ is_published: !image.is_published })
       .eq('id', image.id);
     loadImages();
+  };
+
+  // Open the "Ajouter" dialog pre-filled for a specific album (group_name)
+  const handleAddToAlbum = (groupName: string, title?: string) => {
+    setEditingImage(null);
+    setFormData({
+      title: title || '',
+      description: '',
+      group_name: groupName,
+      sort_order: 0,
+      is_published: true
+    });
+    setUploadedImages([]);
+    setIsDialogOpen(true);
+  };
+
+  // Delete all images that belong to the given album (group_name)
+  const handleDeleteAlbum = async (groupName: string) => {
+    if (!groupName) return;
+    if (!confirm(`Supprimer l'album "${groupName}" et toutes ses images ?`)) return;
+
+    const { error } = await supabase.from('gallery_images').delete().eq('group_name', groupName);
+    if (error) {
+      console.error('❌ Delete album error:', error);
+      toast.error('Erreur: ' + error.message);
+    } else {
+      console.log('✅ Album supprimé:', groupName);
+      toast.success('Album supprimé');
+      loadImages();
+    }
+  };
+
+  // Rename an album (update group_name for all images in that group)
+  const handleRenameAlbum = async (oldName: string) => {
+    const newName = prompt("Nouveau nom d'album", oldName);
+    if (!newName || newName === oldName) return;
+
+    const { error } = await supabase.from('gallery_images').update({ group_name: newName }).eq('group_name', oldName);
+    if (error) {
+      console.error('❌ Rename album error:', error);
+      toast.error('Erreur: ' + error.message);
+    } else {
+      console.log(`✅ Album renommé: ${oldName} -> ${newName}`);
+      toast.success('Album renommé');
+      loadImages();
+    }
   };
 
   const resetForm = () => {
@@ -351,6 +407,20 @@ const AdminGallery = () => {
                     <Badge variant="outline">{groupImages[0].group_name}</Badge>
                   )}
                 </div>
+
+                {groupImages[0].group_name && (
+                  <div className="flex items-center gap-2">
+                    <Button size="icon" variant="outline" onClick={() => handleAddToAlbum(groupImages[0].group_name, groupImages[0].title)} title="Ajouter des images à cet album">
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button size="icon" variant="outline" onClick={() => handleRenameAlbum(groupImages[0].group_name)} title="Renommer l'album">
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button size="icon" variant="destructive" onClick={() => handleDeleteAlbum(groupImages[0].group_name)} title="Supprimer l'album">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">

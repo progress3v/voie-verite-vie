@@ -7,12 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import FixSuperadminRole from '@/components/admin/FixSuperadminRole';
 import { 
   Home, Info, Calendar, BookOpen, MessageSquare, 
-  Image, HelpCircle, Mail, Bot, Settings, Users, Shield, Flame, Cross
+  Image, HelpCircle, Mail, Bot, Settings, Users, Shield, Flame, Cross, User, Palette
 } from 'lucide-react';
 
 const adminSections = [
   { title: 'Accueil', description: 'Gérer la page d\'accueil', icon: Home, path: '/admin/home' },
   { title: 'À Propos', description: 'Gérer la page à propos', icon: Info, path: '/admin/about' },
+  { title: 'Auteur', description: 'Gérer la fiche auteur', icon: User, path: '/admin/author' },
+  { title: 'Design', description: 'Paramètres visuels du site', icon: Palette, path: '/admin/design' },
   { title: 'Carême 2026', description: 'Gérer le programme de Carême', icon: Flame, path: '/admin/careme2026' },
   { title: 'Chemin de Croix', description: 'Gérer les 14 stations', icon: Cross, path: '/admin/chemin-de-croix' },
   { title: 'Activités', description: 'Gérer les activités', icon: Calendar, path: '/admin/activities' },

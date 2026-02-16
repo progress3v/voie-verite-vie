@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -15,8 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, Users, Shield, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Trash2, AlertCircle, Settings } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,14 +49,56 @@ interface UserRole {
   created_at?: string;
 }
 
+type UserPermission = 
+  | 'manage_readings'
+  | 'manage_prayers'
+  | 'manage_gallery'
+  | 'manage_users'
+  | 'manage_contacts'
+  | 'view_contacts'
+  | 'create_notifications'
+  | 'moderate_content'
+  | 'manage_activities'
+  | 'manage_faq'
+  | 'manage_about'
+  | 'view_analytics';
+
+interface UserPermissionData {
+  user_id: string;
+  permission: UserPermission;
+  granted_at: string;
+}
+
+const AVAILABLE_PERMISSIONS: { id: UserPermission; label: string; category: string }[] = [
+  // Content Management
+  { id: 'manage_readings', label: 'Gérer les lectures bibliques', category: 'Contenu' },
+  { id: 'manage_prayers', label: 'Gérer les prières', category: 'Contenu' },
+  { id: 'manage_gallery', label: 'Gérer la galerie', category: 'Contenu' },
+  { id: 'manage_activities', label: 'Gérer les activités', category: 'Contenu' },
+  { id: 'manage_faq', label: 'Gérer la FAQ', category: 'Contenu' },
+  { id: 'manage_about', label: 'Gérer la page À propos', category: 'Contenu' },
+  { id: 'moderate_content', label: 'Modérer les contenus', category: 'Contenu' },
+  // User Management
+  { id: 'manage_users', label: 'Gérer les utilisateurs', category: 'Utilisateurs' },
+  // Communications
+  { id: 'manage_contacts', label: 'Gérer les contacts (voir/supprimer)', category: 'Communications' },
+  { id: 'view_contacts', label: 'Voir les contacts (lecture seule)', category: 'Communications' },
+  { id: 'create_notifications', label: 'Créer des notifications', category: 'Communications' },
+  // Analytics
+  { id: 'view_analytics', label: 'Voir les analytics', category: 'Analytics' },
+];
+
 const AdminUsers = () => {
   const navigate = useNavigate();
   const { user, isAdmin, adminRole, loading: authLoading } = useAdmin();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
+  const [permissions, setPermissions] = useState<UserPermissionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedPermissions, setSelectedPermissions] = useState<Set<UserPermission>>(new Set());
 
   useEffect(() => {
     if (!authLoading) {
@@ -62,15 +113,23 @@ const AdminUsers = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [profilesRes, rolesRes] = await Promise.all([
+      const [profilesRes, rolesRes, permissionsRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('user_roles').select('*')
+        supabase.from('user_roles').select('*'),
+        supabase.from('user_permissions').select('*')
       ]);
       if (profilesRes.data) setProfiles(profilesRes.data);
       if (rolesRes.data) setRoles(rolesRes.data);
+      if (permissionsRes.data) setPermissions(permissionsRes.data);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getUserPermissions = (userId: string): UserPermission[] => {
+    return permissions
+      .filter(p => p.user_id === userId)
+      .map(p => p.permission);
   };
 
   const getUserRole = (userId: string): UserRole['role'] => {
@@ -92,32 +151,112 @@ const AdminUsers = () => {
       const currentRole = getUserRole(userId);
       
       if (currentRole !== 'user') {
-        await supabase.from('user_roles').delete().eq('user_id', userId);
+        const deleteRes = await supabase.from('user_roles').delete().eq('user_id', userId);
+        if (deleteRes.error) {
+          console.error('❌ Delete role error:', deleteRes.error);
+          toast.error('Erreur: ' + deleteRes.error.message);
+          return;
+        }
       }
 
       if (newRole !== 'user') {
-        await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+        const insertRes = await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+        if (insertRes.error) {
+          console.error('❌ Insert role error:', insertRes.error);
+          toast.error('Erreur: ' + insertRes.error.message);
+          return;
+        }
       }
 
+      console.log('✅ Rôle mis à jour');
       toast.success('Rôle mis à jour');
       loadData();
     } catch (error) {
+      console.error('❌ Exception:', error);
       toast.error('Erreur lors de la mise à jour');
     }
+  };
+
+  const openPermissionDialog = (userId: string) => {
+    const userPermissions = getUserPermissions(userId);
+    setSelectedUserId(userId);
+    setSelectedPermissions(new Set(userPermissions));
+    setPermissionDialogOpen(true);
+  };
+
+  const savePermissions = async () => {
+    if (!selectedUserId) return;
+    try {
+      // Delete existing permissions
+      const deleteRes = await supabase.from('user_permissions').delete().eq('user_id', selectedUserId);
+      if (deleteRes.error) {
+        console.error('❌ Delete permissions error:', deleteRes.error);
+      }
+      
+      // Insert new permissions
+      if (selectedPermissions.size > 0) {
+        const newPermissions = Array.from(selectedPermissions).map(permission => ({
+          user_id: selectedUserId,
+          permission,
+          granted_by: user?.id
+        }));
+        const insertRes = await supabase.from('user_permissions').insert(newPermissions);
+        if (insertRes.error) {
+          console.error('❌ Insert permissions error:', insertRes.error);
+          toast.error('Erreur: ' + insertRes.error.message);
+          return;
+        }
+      }
+
+      console.log('✅ Permissions mises à jour');
+      toast.success('Permissions mises à jour');
+      setPermissionDialogOpen(false);
+      loadData();
+    } catch (error) {
+      console.error('❌ Exception:', error);
+      toast.error('Erreur lors de la mise à jour des permissions');
+    }
+  };
+
+  const togglePermission = (permission: UserPermission) => {
+    const newPermissions = new Set(selectedPermissions);
+    if (newPermissions.has(permission)) {
+      newPermissions.delete(permission);
+    } else {
+      newPermissions.add(permission);
+    }
+    setSelectedPermissions(newPermissions);
   };
 
   const deleteUser = async () => {
     if (!selectedUserId) return;
     try {
-      // Supprimer d'abord les rôles
-      await supabase.from('user_roles').delete().eq('user_id', selectedUserId);
-      // Puis supprimer le profil
-      await supabase.from('profiles').delete().eq('id', selectedUserId);
+      console.log('🗑️ Deleting user:', selectedUserId);
       
+      // Supprimer d'abord les rôles
+      const deleteRolesRes = await supabase.from('user_roles').delete().eq('user_id', selectedUserId);
+      if (deleteRolesRes.error) console.warn('⚠️ Delete roles error:', deleteRolesRes.error);
+      else console.log('✅ Roles deleted');
+      
+      // Supprimer les permissions
+      const deletePermsRes = await supabase.from('user_permissions').delete().eq('user_id', selectedUserId);
+      if (deletePermsRes.error) console.warn('⚠️ Delete permissions error:', deletePermsRes.error);
+      else console.log('✅ Permissions deleted');
+      
+      // Puis supprimer le profil
+      const deleteProfileRes = await supabase.from('profiles').delete().eq('id', selectedUserId);
+      if (deleteProfileRes.error) {
+        console.error('❌ Delete profile error:', deleteProfileRes.error);
+        toast.error('Erreur: ' + deleteProfileRes.error.message);
+        return;
+      }
+      
+      console.log('✅ User deleted successfully');
       toast.success('Utilisateur supprimé');
       setDeleteDialogOpen(false);
       loadData();
     } catch (error) {
+      console.error('❌ Exception:', error);
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -201,7 +340,7 @@ const AdminUsers = () => {
                         {isMainAdmin && !isCurrentUser && (
                           <>
                             <Select value={role} onValueChange={(newRole: any) => updateUserRole(profile.id, newRole)}>
-                              <SelectTrigger className="w-[150px]">
+                              <SelectTrigger className="w-[130px]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -210,6 +349,15 @@ const AdminUsers = () => {
                                 <SelectItem value="admin">Admin</SelectItem>
                               </SelectContent>
                             </Select>
+                            {role !== 'user' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => openPermissionDialog(profile.id)}
+                              >
+                                <Settings className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button 
                               size="sm" 
                               variant="destructive"
@@ -249,6 +397,51 @@ const AdminUsers = () => {
           </AlertDialogAction>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gérer les permissions</DialogTitle>
+            <DialogDescription>
+              Sélectionnez les permissions à accorder à cet utilisateur
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {['Contenu', 'Utilisateurs', 'Communications', 'Analytics'].map(category => (
+              <div key={category}>
+                <h3 className="font-semibold mb-3 text-sm">{category}</h3>
+                <div className="space-y-2 pl-4">
+                  {AVAILABLE_PERMISSIONS.filter(p => p.category === category).map(permission => (
+                    <div key={permission.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={permission.id}
+                        checked={selectedPermissions.has(permission.id)}
+                        onCheckedChange={() => togglePermission(permission.id)}
+                      />
+                      <label 
+                        htmlFor={permission.id}
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        {permission.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPermissionDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={savePermissions}>
+              Enregistrer les permissions
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

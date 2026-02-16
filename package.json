@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "apply:admin-fixes": "node apply-admin-fixes.mjs",
     "preview": "vite preview",
     "postinstall": "bash ./fix-html2canvas-tsconfig.sh"
   },

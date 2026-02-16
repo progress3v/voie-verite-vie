@@ -74,11 +74,23 @@ const AdminReadings = () => {
     };
 
     if (editingReading) {
-      await supabase.from('biblical_readings').update(readingData).eq('id', editingReading.id);
-      toast.success('Lecture modifiée');
+      const { error } = await supabase.from('biblical_readings').update(readingData).eq('id', editingReading.id);
+      if (error) {
+        console.error('❌ Update reading error:', error);
+        toast.error('Erreur: ' + error.message);
+      } else {
+        console.log('✅ Lecture modifiée');
+        toast.success('Lecture modifiée');
+      }
     } else {
-      await supabase.from('biblical_readings').insert(readingData);
-      toast.success('Lecture ajoutée');
+      const { error } = await supabase.from('biblical_readings').insert(readingData);
+      if (error) {
+        console.error('❌ Insert reading error:', error);
+        toast.error('Erreur: ' + error.message);
+      } else {
+        console.log('✅ Lecture ajoutée');
+        toast.success('Lecture ajoutée');
+      }
     }
     
     setIsDialogOpen(false);
@@ -102,9 +114,15 @@ const AdminReadings = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Supprimer cette lecture ?')) {
-      await supabase.from('biblical_readings').delete().eq('id', id);
-      toast.success('Lecture supprimée');
-      loadReadings();
+      const { error } = await supabase.from('biblical_readings').delete().eq('id', id);
+      if (error) {
+        console.error('❌ Delete reading error:', error);
+        toast.error('Erreur: ' + error.message);
+      } else {
+        console.log('✅ Lecture supprimée');
+        toast.success('Lecture supprimée');
+        loadReadings();
+      }
     }
   };
 

@@ -36,10 +36,10 @@ const ICONS: Record<string, any> = {
   Settings,
 };
 import { useAuth } from '@/hooks/useAuth';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useSettings } from '@/hooks/useSettings';
 import siteLinks from '@/data/site-links';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { NotificationBell } from './NotificationBell';
 import logo3v from '@/assets/logo-3v.png';
 
@@ -50,14 +50,22 @@ interface BeforeInstallPromptEvent extends Event {
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const { settings, setTheme, isDarkMode } = useSettings();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    console.log('📱 [Navigation] State update:', { 
+      user: user?.email, 
+      isAdmin,
+      userExists: !!user 
+    });
+  }, [user, isAdmin]);
 
   // PWA install prompt
   useEffect(() => {
@@ -85,20 +93,6 @@ const Navigation = () => {
     }
     setDeferredPrompt(null);
   };
-
-  useEffect(() => {
-    if (user) {
-      supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single()
-        .then(({ data }) => setIsAdmin(!!data));
-    } else {
-      setIsAdmin(false);
-    }
-  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();

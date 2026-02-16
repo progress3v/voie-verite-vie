@@ -36,6 +36,25 @@ const Admin = () => {
   const { user, isAdmin, adminRole, loading } = useAdmin();
   const [stats, setStats] = useState<Stats>({ users: 0, readings: 0, prayers: 0, messages: 0 });
 
+  // Déterminer les sections à afficher
+  const getSections = () => {
+    const sections = [...adminSections];
+    
+    // Ajouter la gestion des administrateurs si on est admin_principal
+    const isMainAdmin = adminRole === 'admin_principal';
+    
+    if (isMainAdmin) {
+      sections.push({
+        title: 'Administrateurs',
+        description: 'Gérer les administrateurs',
+        icon: Shield,
+        path: '/admin/admins'
+      });
+    }
+    
+    return sections;
+  };
+
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
       navigate('/');
@@ -100,7 +119,7 @@ const Admin = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {adminSections.map((section) => (
+          {getSections().map((section) => (
             <Link key={section.path} to={section.path}>
               <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full border-border hover:border-primary/50">
                 <CardHeader>

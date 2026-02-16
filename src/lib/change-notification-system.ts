@@ -10,6 +10,7 @@ import {
   sendCheminDeCroixReminder,
   sendActivityNotification,
   sendUpdateNotification,
+  sendVisibleNotification,
 } from './notification-service';
 
 /**
@@ -135,7 +136,71 @@ export const initChangeNotificationSystem = async (userId?: string): Promise<() 
 };
 
 /**
+ * Envoie une notification de bienvenue INTELLIGENTE
+ * - Seulement une fois par jour (pas chaque fois qu'on ouvre l'app)
+ * - Message adapté selon l'heure (matin vs soir)
+ * - Notification VISIBLE et AUDIBLE
+ */
+export const sendDailyWelcomeNotification = async (userId?: string) => {
+  try {
+    if (!userId) return;
+
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const storageKey = `welcome-notification-sent-${userId}-${today}`;
+    
+    // Vérifier si on a déjà envoyé une notification aujourd'hui
+    if (localStorage.getItem(storageKey)) {
+      console.log('Notification de bienvenue déjà envoyée aujourd\'hui');
+      return;
+    }
+
+    // Déterminer l'heure et adapter le message
+    const hour = new Date().getHours();
+    let welcomeMessage = '';
+    let timeEmoji = '';
+
+    if (hour < 12) {
+      // Matin (avant midi)
+      timeEmoji = '🌅';
+      welcomeMessage = `Bonjour! J'espère que ta nuit s'est bien passée. Bienvenue dans notre communauté!`;
+    } else if (hour < 18) {
+      // Après-midi
+      timeEmoji = '☀️';
+      welcomeMessage = `Bienvenue! J'espère que ta journée se passe bien!`;
+    } else {
+      // Soir (après 18h)
+      timeEmoji = '🌙';
+      welcomeMessage = `Bonsoir! J'espère que ta journée s'est bien passée. Bienvenue!`;
+    }
+
+    // Envoyer la notification VISIBLE et AUDIBLE
+    await sendVisibleNotification({
+      title: `${timeEmoji} Bienvenue!`,
+      body: welcomeMessage,
+      tag: `welcome-${today}`,
+      badge: '/logo-3v.png',
+      icon: '/logo-3v.png',
+      data: {
+        action: 'welcome',
+        timestamp: new Date().toISOString(),
+        hour,
+      },
+      action: 'reminder',
+      silent: false, // IMPORTANT: Notification AUDIBLE
+    });
+
+    // Marquer que la notification a été envoyée aujourd'hui
+    localStorage.setItem(storageKey, 'true');
+    console.log('✅ Notification de bienvenue envoyée:', welcomeMessage);
+
+  } catch (err) {
+    console.log('Erreur sendDailyWelcomeNotification:', err);
+  }
+};
+
+/**
  * Envoie une notification de bienvenue avec un résumé des activités disponibles
+ * @deprecated Utiliser sendDailyWelcomeNotification à la place
  */
 export const sendWelcomeNotification = async () => {
   await sendUpdateNotification(

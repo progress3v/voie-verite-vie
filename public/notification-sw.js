@@ -1,4 +1,5 @@
 // Service Worker pour les notifications
+// Gère les notifications visibles, audibles et avec vibration
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installation');
@@ -19,6 +20,8 @@ self.addEventListener('push', (event) => {
     badge: '/logo-3v.png',
     icon: '/logo-3v.png',
     tag: 'default',
+    silent: false,
+    requireInteraction: false,
   };
 
   if (event.data) {
@@ -36,7 +39,9 @@ self.addEventListener('push', (event) => {
       badge: data.badge,
       icon: data.icon,
       tag: data.tag,
-      requireInteraction: true,
+      requireInteraction: data.requireInteraction ?? false,
+      silent: data.silent ?? false,
+      vibrate: data.vibrate || [200, 100, 200],
       data: data,
     })
   );
@@ -59,6 +64,13 @@ self.addEventListener('notificationclick', (event) => {
         break;
       case 'activity':
         urlToOpen = '/activities';
+        break;
+      case 'bible':
+        urlToOpen = '/biblical-reading';
+        break;
+      case 'welcome':
+      case 'reminder':
+        urlToOpen = '/';
         break;
       default:
         urlToOpen = '/';
@@ -100,3 +112,21 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Handler pour les notifications même si l'app n'est pas ouverte
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const notification = event.data.payload;
+    self.registration.showNotification(notification.title, {
+      body: notification.body,
+      badge: notification.badge || '/logo-3v.png',
+      icon: notification.icon || '/logo-3v.png',
+      tag: notification.tag || `notification-${Date.now()}`,
+      requireInteraction: notification.requireInteraction ?? true,
+      silent: notification.silent ?? false,
+      vibrate: notification.vibrate || [200, 100, 200],
+      data: notification.data || {},
+    });
+  }
+});
+

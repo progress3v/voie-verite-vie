@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Heart, BookOpen } from 'lucide-react';
+import { ArrowRight, Heart, BookOpen, MessageCircle, Youtube, Users } from 'lucide-react';
 import heroDove from '@/assets/hero-dove.jpg';
 import logo3v from '@/assets/logo-3v.png';
 import { useAuth } from '@/hooks/useAuth';
@@ -34,6 +34,7 @@ const HeroSection = () => {
   const { user } = useAuth();
   const [currentVerse, setCurrentVerse] = useState(0);
   const [location, setLocation] = useState<GreetingLocation | null>(null);
+  const [showCommunityOptions, setShowCommunityOptions] = useState(false);
 
   const userName = useMemo(() => {
     const metaName = (user?.user_metadata as any)?.full_name as string | undefined;
@@ -187,29 +188,81 @@ const HeroSection = () => {
           </div>
 
           {/* Boutons d'action */}
-          <div className="fade-in-up flex flex-col sm:flex-row items-center justify-center gap-4" style={{ animationDelay: '0.9s' }}>
-            <Button 
-              size="lg" 
-              className="divine-glow text-lg px-8 py-6 bg-gradient-peace hover:scale-105 transition-all duration-300"
-              asChild
-            >
-              <Link to="/auth">
+          {!showCommunityOptions ? (
+            <div className="fade-in-up flex flex-col sm:flex-row items-center justify-center gap-4" style={{ animationDelay: '0.9s' }}>
+              <Button 
+                size="lg" 
+                className="divine-glow text-lg px-8 py-6 bg-gradient-peace hover:scale-105 transition-all duration-300"
+                onClick={() => setShowCommunityOptions(true)}
+              >
+                <Users className="mr-2 w-5 h-5" />
                 Rejoignez notre communauté
                 <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="text-lg px-8 py-6 border-2 border-primary/30 hover:bg-primary/5 hover:scale-105 transition-all duration-300"
-              asChild
-            >
-              <Link to="/activities">
-                <BookOpen className="mr-2 w-5 h-5" />
-                Découvrir nos activités
-              </Link>
-            </Button>
-          </div>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="text-lg px-8 py-6 border-2 border-primary/30 hover:bg-primary/5 hover:scale-105 transition-all duration-300"
+                asChild
+              >
+                <Link to="/activities">
+                  <BookOpen className="mr-2 w-5 h-5" />
+                  Découvrir nos activités
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="fade-in-up grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto" style={{ animationDelay: '0.9s' }}>
+              <Button 
+                size="lg" 
+                className="divine-glow text-lg px-8 py-6 bg-gradient-peace hover:scale-105 transition-all duration-300"
+                asChild
+              >
+                <Link to="/auth">
+                  <Heart className="mr-2 w-5 h-5" />
+                  Créer un compte
+                </Link>
+              </Button>
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 bg-green-600 hover:bg-green-700 hover:scale-105 transition-all duration-300 text-white"
+                asChild
+              >
+                <a href="https://chat.whatsapp.com/FfvCe9nHwpj5OYoDZBfGER" target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="mr-2 w-5 h-5" />
+                  Groupe WhatsApp
+                </a>
+              </Button>
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 bg-green-600 hover:bg-green-700 hover:scale-105 transition-all duration-300 text-white"
+                asChild
+              >
+                <a href="https://whatsapp.com/channel/0029VbB0GplLY6d6hkP5930J" target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="mr-2 w-5 h-5" />
+                  Chaîne WhatsApp
+                </a>
+              </Button>
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 bg-red-600 hover:bg-red-700 hover:scale-105 transition-all duration-300 text-white"
+                asChild
+              >
+                <a href="https://youtube.com/@voie-verite-vie?si=qD8LmbyREJdQm1Db" target="_blank" rel="noopener noreferrer">
+                  <Youtube className="mr-2 w-5 h-5" />
+                  Chaîne YouTube
+                </a>
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="text-lg px-8 py-6 col-span-full hover:scale-105 transition-all duration-300 md:col-span-2"
+                onClick={() => setShowCommunityOptions(false)}
+              >
+                Revenir
+              </Button>
+            </div>
+          )}
 
           {/* Statistiques inspirantes */}
             <div className="fade-in-up mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto dark:text-slate-100" style={{ animationDelay: '1.2s' }}>

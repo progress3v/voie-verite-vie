@@ -33,7 +33,7 @@ interface Stats {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, loading } = useAdmin();
+  const { user, isAdmin, adminRole, loading } = useAdmin();
   const [stats, setStats] = useState<Stats>({ users: 0, readings: 0, prayers: 0, messages: 0 });
 
   useEffect(() => {
@@ -83,10 +83,20 @@ const Admin = () => {
           <div className="flex items-center gap-3 mb-2">
             <Shield className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold text-foreground">Administration</h1>
+            {adminRole === 'admin_principal' && (
+              <span className="text-2xl">👑</span>
+            )}
           </div>
-          <p className="text-muted-foreground">
-            Bienvenue dans le panneau d'administration de VOIE, VÉRITÉ, VIE
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground">
+              Bienvenue dans le panneau d'administration de VOIE, VÉRITÉ, VIE
+            </p>
+            {adminRole === 'admin_principal' && (
+              <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                Admin Principal
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

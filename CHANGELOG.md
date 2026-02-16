@@ -2,6 +2,31 @@
 
 ## ✨ Nouvelles Fonctionnalités
 
+### 👑 Admin Role Hierarchy System (NEW - SESSION 5)
+- **Système de Rôles à Trois Niveaux**
+  - `admin_principal`: Admin principal avec contrôle complet
+  - `admin`: Admin régulier avec permissions limitées  
+  - `moderator`: Modérateur avec permissions de modération
+  - Gestion complète des rôles dans AdminUsers
+  - Affichage du badge "👑 Admin Principal" dans l'interface
+
+- **Gestion des Utilisateurs Améliorée**
+  - Sélecteur de rôles déroulant pour assigner/modifier les rôles
+  - Suppression d'utilisateurs avec confirmation
+  - Vue d'ensemble des permissions par rôle
+  - Seul l'admin principal peut modifier les rôles
+
+### 🙏 Prayer Forum - Admin Principal Label (NEW - SESSION 5)
+- Les prières postées par l'admin principal affichent "👑 Admin Principal"
+- Les réponses de l'admin principal sont identifiées avec le badge
+- Récupération automatique du rôle utilisateur
+- Affichage amélioré de l'autorité dans les messages
+
+### 📋 Admin Dashboard Enhancements (NEW - SESSION 5)
+- Affichage du rôle admin dans le header
+- Badge "Admin Principal" visible dans le tableau de bord
+- Gestion centralisée des permissions admin
+
 ### Bible Intégrée
 - **📖 Explorateur des 73 Livres Bibliques** 
   - Interface complète pour explorer tous les livres de la Bible catholique
@@ -31,6 +56,23 @@
   - Prêt pour validation côté serveur
 
 ## 🔧 Corrections
+
+### Améliorations Admin (SESSION 5)
+- **Hook useAdmin enhancé**
+  - Maintenant retourne `adminRole` en plus de `isAdmin`
+  - Support complet des trois niveaux de rôle
+  - Backward compatible avec pages admin existantes
+
+- **AdminUsers Page**
+  - Correction du hook utilisé (useAuth au lieu de useAdmin)
+  - Implémentation complète de la gestion des rôles
+  - Fondation pour le système d'autorisation
+
+- **Supabase Migration**
+  - Nouvelle migration: `20260215_add_admin_roles_hierarchy.sql`
+  - Support des rôles dans user_roles table
+  - Fonctions helper pour vérification des permissions
+  - Mise à jour des RLS policies
 
 - **Correction critique**: Import manquant dans `AIAssistant.tsx`
   - Guillemet fermant manquant: `from '@/components/ui/scroll-area;` → `from '@/components/ui/scroll-area';`

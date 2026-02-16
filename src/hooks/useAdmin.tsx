@@ -2,9 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 
+export type AdminRole = 'admin_principal' | 'admin' | 'moderator' | null;
+
 export const useAdmin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState<AdminRole>(null);
   const [loading, setLoading] = useState(true);
   const [checked, setChecked] = useState(false);
 
@@ -14,18 +17,24 @@ export const useAdmin = () => {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .eq('role', 'admin')
+        .in('role', ['admin_principal', 'admin', 'moderator'])
         .maybeSingle();
       
       if (error) {
         console.error('Error checking admin role:', error);
         setIsAdmin(false);
+        setAdminRole(null);
+      } else if (data) {
+        setIsAdmin(true);
+        setAdminRole(data.role as AdminRole);
       } else {
-        setIsAdmin(!!data);
+        setIsAdmin(false);
+        setAdminRole(null);
       }
     } catch (err) {
       console.error('Error in checkAdmin:', err);
       setIsAdmin(false);
+      setAdminRole(null);
     } finally {
       setLoading(false);
       setChecked(true);
@@ -63,6 +72,7 @@ export const useAdmin = () => {
           await checkAdmin(session.user.id);
         } else {
           setIsAdmin(false);
+          setAdminRole(null);
           setLoading(false);
           setChecked(true);
         }
@@ -75,5 +85,5 @@ export const useAdmin = () => {
     };
   }, [checkAdmin]);
 
-  return { user, isAdmin, loading, checked };
+  return { user, isAdmin, adminRole, loading, checked };
 };

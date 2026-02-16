@@ -22,6 +22,7 @@ interface PrayerRequest {
   created_at: string;
   user_id: string | null;
   profiles?: { full_name: string | null } | null;
+  user_role?: string | null;
 }
 
 interface PrayerResponse {
@@ -30,6 +31,7 @@ interface PrayerResponse {
   created_at: string;
   user_id: string | null;
   profiles?: { full_name: string | null } | null;
+  user_role?: string | null;
 }
 
 const PrayerForum = () => {
@@ -63,15 +65,27 @@ const PrayerForum = () => {
       
       const requestsWithProfiles = await Promise.all(
         (data || []).map(async (request) => {
+          let profiles = null;
+          let user_role = null;
+          
           if (!request.is_anonymous && request.user_id) {
             const { data: profile } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', request.user_id)
               .maybeSingle();
-            return { ...request, profiles: profile };
+            profiles = profile;
+            
+            // Fetch user role
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', request.user_id)
+              .maybeSingle();
+            user_role = roleData?.role || null;
           }
-          return { ...request, profiles: null };
+          
+          return { ...request, profiles, user_role };
         })
       );
       
@@ -95,15 +109,27 @@ const PrayerForum = () => {
 
       const responsesWithProfiles = await Promise.all(
         (data || []).map(async (response) => {
+          let profile = null;
+          let user_role = null;
+          
           if (response.user_id) {
-            const { data: profile } = await supabase
+            const { data: profileData } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', response.user_id)
               .maybeSingle();
-            return { ...response, profiles: profile };
+            profile = profileData;
+            
+            // Fetch user role
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', response.user_id)
+              .maybeSingle();
+            user_role = roleData?.role || null;
           }
-          return { ...response, profiles: null };
+          
+          return { ...response, profiles: profile, user_role };
         })
       );
 
@@ -261,6 +287,17 @@ const PrayerForum = () => {
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
+  const getAuthorDisplay = (request: PrayerRequest) => {
+    if (request.is_anonymous) return 'Anonyme';
+    if (request.user_role === 'admin_principal') return '👑 Admin Principal';
+    return request.profiles?.full_name || 'Membre';
+  };
+
+  const getResponseAuthorDisplay = (response: PrayerResponse) => {
+    if (response.user_role === 'admin_principal') return '👑 Admin Principal';
+    return response.profiles?.full_name || 'Membre Anonyme';
+  };
+
   // Sort requests
   const recentRequests = [...requests].slice(0, 10);
   const mostPrayed = [...requests].sort((a, b) => b.prayer_count - a.prayer_count).slice(0, 10);
@@ -388,6 +425,7 @@ const PrayerForum = () => {
                             onViewDetails={() => openRequestDetail(request)}
                             isPrayed={prayedFor.has(request.id)}
                             getTimeAgo={getTimeAgo}
+                            getAuthorDisplay={getAuthorDisplay}
                           />
                         ))
                       )}
@@ -412,6 +450,7 @@ const PrayerForum = () => {
                             onViewDetails={() => openRequestDetail(request)}
                             isPrayed={prayedFor.has(request.id)}
                             getTimeAgo={getTimeAgo}
+                            getAuthorDisplay={getAuthorDisplay}
                           />
                         ))
                       )}
@@ -439,7 +478,7 @@ const PrayerForum = () => {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mt-4">
                   <span className="flex items-center gap-1">
                     <User className="w-4 h-4" />
-                    {selectedRequest.is_anonymous ? 'Anonyme' : selectedRequest.profiles?.full_name || 'Membre'}
+                    {getAuthorDisplay(selectedRequest)}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
@@ -464,7 +503,7 @@ const PrayerForum = () => {
                       <p className="text-sm">{response.content}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                         <User className="w-3 h-3" />
-                        {response.profiles?.full_name || 'Membre'}
+                        {getResponseAuthorDisplay(response)}
                         <span>•</span>
                         {new Date(response.created_at).toLocaleDateString('fr-FR')}
                       </div>
@@ -505,13 +544,15 @@ const PrayerRequestCard = ({
   onPray, 
   onViewDetails,
   isPrayed,
-  getTimeAgo
+  getTimeAgo,
+  getAuthorDisplay
 }: { 
   request: PrayerRequest; 
   onPray: (id: string, count: number) => void;
   onViewDetails: () => void;
   isPrayed: boolean;
   getTimeAgo: (date: string) => string;
+  getAuthorDisplay: (request: PrayerRequest) => string;
 }) => (
   <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onViewDetails}>
     <CardContent className="pt-6">
@@ -529,7 +570,7 @@ const PrayerRequestCard = ({
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <User className="w-4 h-4" />
-            {request.is_anonymous ? 'Anonyme' : request.profiles?.full_name || 'Membre'}
+            {getAuthorDisplay(request)}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="w-4 h-4" />

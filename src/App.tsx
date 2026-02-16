@@ -11,7 +11,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { initNotificationsAutomatically, initNotificationClickHandler } from "@/lib/notification-service";
-import { initChangeNotificationSystem, sendWelcomeNotification } from "@/lib/change-notification-system";
+import { initChangeNotificationSystem, sendDailyWelcomeNotification } from "@/lib/change-notification-system";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Activities from "./pages/Activities";
@@ -59,11 +59,8 @@ const AppNotificationInitializer = ({ children }: { children: React.ReactNode })
         // Initialiser le système de changements
         const cleanup = await initChangeNotificationSystem(user.id);
         
-        // Envoyer une notification de bienvenue une fois par session
-        if (!sessionStorage.getItem('notification-welcome-sent')) {
-          await sendWelcomeNotification();
-          sessionStorage.setItem('notification-welcome-sent', 'true');
-        }
+        // Envoyer une notification de bienvenue INTELLIGENTE une fois par jour
+        await sendDailyWelcomeNotification(user.id);
 
         // Retourner la fonction cleanup
         return cleanup;

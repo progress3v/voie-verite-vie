@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ArrowLeft, Users, Shield, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Shield, Trash2, AlertCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,80 +27,113 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-interface Profile {
+interface AdminUser {
   id: string;
   email: string;
   full_name: string | null;
-  created_at: string | null;
+  role: 'admin_principal' | 'admin' | 'moderator';
 }
 
-interface UserRole {
-  user_id: string;
-  role: 'admin_principal' | 'admin' | 'moderator' | 'user';
-  created_at?: string;
-}
-
-const AdminUsers = () => {
+const AdminManagement = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [roles, setRoles] = useState<UserRole[]>([]);
+  const { user, loading: authLoading, isAdmin } = useAuth();
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isMainAdmin, setIsMainAdmin] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
-      checkAdminStatus();
+      checkAccess();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, isAdmin]);
 
-  const checkAdminStatus = async () => {
-    if (!user) {
+  const checkAccess = async () => {
+    if (!user || !isAdmin) {
       navigate('/');
       return;
     }
 
-    const { data: userRoles } = await supabase
+    // Vérifier si l'utilisateur est l'admin principal
+    const { data: userRole } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id);
 
-    // Chercher un rôle admin parmi tous les rôles
-    const adminRole = userRoles?.find((r: any) => 
-      ['admin_principal', 'admin', 'moderator'].includes(r.role)
-    );
+    const isMainAdmin = userRole?.some((r: any) => r.role === 'admin_principal');
 
-    if (!adminRole) {
-      navigate('/');
+    if (!isMainAdmin) {
+      navigate('/admin');
       return;
     }
 
-    setIsMainAdmin(adminRole.role === 'admin_principal');
-    loadData();
+    loadAdmins();
   };
 
-  const loadData = async () => {
+  const loadAdmins = async () => {
     try {
       setLoading(true);
-      const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('user_roles').select('*')
-      ]);
-      if (profilesRes.data) setProfiles(profilesRes.data);
-      if (rolesRes.data) setRoles(rolesRes.data);
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['admin_principal', 'admin', 'moderator']);
+
+      if (!adminRoles) return;
+
+      const userIds = adminRoles.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', userIds);
+
+      const adminUsers = profiles?.map(profile => {
+        const role = adminRoles.find(r => r.user_id === profile.id)?.role;
+        return {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          role: role as any,
+        };
+      }) || [];
+
+      setAdmins(adminUsers);
     } finally {
       setLoading(false);
     }
   };
 
-  const getUserRole = (userId: string): UserRole['role'] => {
-    const role = roles.find(r => r.user_id === userId);
-    return role?.role || 'user';
+  const updateAdminRole = async (userId: string, newRole: 'admin' | 'moderator') => {
+    try {
+      // Supprimer l'ancien rôle
+      await supabase.from('user_roles').delete().eq('user_id', userId);
+      
+      // Ajouter le nouveau rôle
+      await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+
+      toast.success('Rôle mis à jour');
+      loadAdmins();
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+      console.error(error);
+    }
   };
 
-  const getRoleLabel = (role: UserRole['role']) => {
+  const deleteAdmin = async () => {
+    if (!selectedAdminId) return;
+    try {
+      // Supprimer le rôle admin
+      await supabase.from('user_roles').delete().eq('user_id', selectedAdminId);
+      
+      toast.success('Admin supprimé');
+      setDeleteDialogOpen(false);
+      loadAdmins();
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+      console.error(error);
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
     switch (role) {
       case 'admin_principal': return '👑 Admin Principal';
       case 'admin': return '🔐 Admin';
@@ -109,44 +142,8 @@ const AdminUsers = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: UserRole['role']) => {
-    try {
-      const currentRole = getUserRole(userId);
-      
-      if (currentRole !== 'user') {
-        await supabase.from('user_roles').delete().eq('user_id', userId);
-      }
-
-      if (newRole !== 'user') {
-        await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
-      }
-
-      toast.success('Rôle mis à jour');
-      loadData();
-    } catch (error) {
-      toast.error('Erreur lors de la mise à jour');
-    }
-  };
-
-  const deleteUser = async () => {
-    if (!selectedUserId) return;
-    try {
-      // Supprimer d'abord les rôles
-      await supabase.from('user_roles').delete().eq('user_id', selectedUserId);
-      // Puis supprimer le profil
-      await supabase.from('profiles').delete().eq('id', selectedUserId);
-      
-      toast.success('Utilisateur supprimé');
-      setDeleteDialogOpen(false);
-      loadData();
-    } catch (error) {
-      toast.error('Erreur lors de la suppression');
-    }
-  };
-
   if (loading || authLoading) return <AdminLoadingSpinner />;
-  // Seul l'admin principal peut accéder à cette page
-  if (!user || !isMainAdmin) return null;
+  if (!user || !isAdmin) return null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -156,22 +153,18 @@ const AdminUsers = () => {
           <ArrowLeft className="h-4 w-4 mr-2" /> Retour
         </Button>
 
-        <div className="mb-6">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-2 mb-2">
-            <Users className="h-8 w-8" /> Gestion des Utilisateurs
+            <Shield className="h-8 w-8" /> Gestion des Administrateurs
           </h1>
-          {isMainAdmin && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <Shield className="h-4 w-4" /> Vous êtes Admin Principal
-            </p>
-          )}
+          <p className="text-muted-foreground">Page réservée à l'Admin Principal</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5" />
-              {profiles.length} utilisateur(s)
+              {admins.length} administrateur(s)
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
@@ -181,56 +174,51 @@ const AdminUsers = () => {
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rôle</TableHead>
-                  <TableHead>Inscrit le</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {profiles.map((profile) => {
-                  const role = getUserRole(profile.id);
-                  const isCurrentUser = user?.id === profile.id;
+                {admins.map((admin) => {
+                  const isCurrentUser = user?.id === admin.id;
                   
                   return (
-                    <TableRow key={profile.id} className={isCurrentUser ? 'bg-muted/50' : ''}>
+                    <TableRow key={admin.id} className={isCurrentUser ? 'bg-muted/50' : ''}>
                       <TableCell className="font-medium">
-                        {profile.full_name || 'Non renseigné'}
+                        {admin.full_name || 'Non renseigné'}
                         {isCurrentUser && <span className="ml-2 text-xs text-primary">(Vous)</span>}
                       </TableCell>
-                      <TableCell>{profile.email}</TableCell>
+                      <TableCell>{admin.email}</TableCell>
                       <TableCell>
                         <Badge 
                           variant={
-                            role === 'admin_principal' ? 'default' :
-                            role === 'admin' ? 'secondary' :
-                            role === 'moderator' ? 'outline' :
-                            'secondary'
+                            admin.role === 'admin_principal' ? 'default' :
+                            admin.role === 'admin' ? 'secondary' :
+                            'outline'
                           }
-                          className={role === 'admin_principal' ? 'bg-gradient-peace' : ''}
                         >
-                          {getRoleLabel(role)}
+                          {getRoleLabel(admin.role)}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {profile.created_at ? new Date(profile.created_at).toLocaleDateString('fr-FR') : '-'}
-                      </TableCell>
                       <TableCell className="flex gap-2">
-                        {isMainAdmin && !isCurrentUser && (
+                        {!isCurrentUser && admin.role !== 'admin_principal' && (
                           <>
-                            <Select value={role} onValueChange={(newRole: any) => updateUserRole(profile.id, newRole)}>
+                            <Select 
+                              value={admin.role === 'admin_principal' ? 'admin' : admin.role}
+                              onValueChange={(newRole: any) => updateAdminRole(admin.id, newRole)}
+                            >
                               <SelectTrigger className="w-[150px]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="user">Utilisateur</SelectItem>
-                                <SelectItem value="moderator">Modérateur</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="moderator">Modérateur</SelectItem>
                               </SelectContent>
                             </Select>
                             <Button 
                               size="sm" 
                               variant="destructive"
                               onClick={() => {
-                                setSelectedUserId(profile.id);
+                                setSelectedAdminId(admin.id);
                                 setDeleteDialogOpen(true);
                               }}
                             >
@@ -251,14 +239,14 @@ const AdminUsers = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmation de suppression</AlertDialogTitle>
+            <AlertDialogTitle>Retirer les droits admin</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.
+              Êtes-vous sûr de vouloir retirer cette personne des administrateurs?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction onClick={deleteUser} className="bg-destructive">
-            Supprimer
+          <AlertDialogAction onClick={deleteAdmin} className="bg-destructive">
+            Retirer
           </AlertDialogAction>
         </AlertDialogContent>
       </AlertDialog>
@@ -266,4 +254,4 @@ const AdminUsers = () => {
   );
 };
 
-export default AdminUsers;
+export default AdminManagement;

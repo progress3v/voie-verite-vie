@@ -7,8 +7,9 @@ import AdminLoadingSpinner from '@/components/admin/AdminLoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Mail, Eye } from 'lucide-react';
+import { ArrowLeft, Mail, Eye, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface ContactMessage {
   id: string;
@@ -42,6 +43,20 @@ const AdminContact = () => {
       .select('*')
       .order('created_at', { ascending: false });
     if (data) setMessages(data);
+  };
+
+  const deleteMessage = async (id: string) => {
+    if (!confirm('Êtes-vous sûr?')) return;
+    try {
+      const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Message supprimé');
+      setSelectedMessage(null);
+      loadMessages();
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+      console.error(error);
+    }
   };
 
   if (loading) return <AdminLoadingSpinner />;
@@ -80,9 +95,12 @@ const AdminContact = () => {
                     <TableCell>{msg.type}</TableCell>
                     <TableCell>{msg.subject}</TableCell>
                     <TableCell>{new Date(msg.created_at).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => setSelectedMessage(msg)}>
                         <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => deleteMessage(msg.id)}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -101,6 +119,13 @@ const AdminContact = () => {
               <p><strong>De:</strong> {selectedMessage?.name} ({selectedMessage?.email})</p>
               <p><strong>Type:</strong> {selectedMessage?.type}</p>
               <p className="mt-4 whitespace-pre-wrap">{selectedMessage?.message}</p>
+              <Button 
+                variant="destructive" 
+                onClick={() => selectedMessage && deleteMessage(selectedMessage.id)}
+                className="w-full mt-4"
+              >
+                <Trash2 className="h-4 w-4 mr-2" /> Supprimer ce message
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

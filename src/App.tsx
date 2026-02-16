@@ -40,6 +40,8 @@ import AdminFAQ from "./pages/admin/AdminFAQ";
 import AdminAI from "./pages/admin/AdminAI";
 import AdminCareme2026 from "./pages/admin/AdminCareme2026";
 import AdminCheminDeCroix from "./pages/admin/AdminCheminDeCroix";
+import AdminManagement from "./pages/admin/AdminManagement";
+import Profile from "./pages/Profile";
 import Creator from "./pages/Creator";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -110,6 +112,7 @@ const App = () => {
               <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
+              <Route path="/faq" element={<FAQ />} />
               <Route path="/activities" element={<Activities />} />
               <Route path="/biblical-reading" element={<BiblicalReading />} />
               <Route path="/bible-book/:bookId" element={<BibleBookDetail />} />
@@ -138,6 +141,8 @@ const App = () => {
               <Route path="/admin/contact" element={<AdminContact />} />
               <Route path="/admin/ai" element={<AdminAI />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/admins" element={<AdminManagement />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
               </AppNotificationInitializer>

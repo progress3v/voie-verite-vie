@@ -296,7 +296,7 @@ const AdminCareme2026 = () => {
                     <Plus className="h-4 w-4" /> Ajouter un jour
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-[95vw] sm:max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {editingDay?.id ? 'Modifier le jour' : 'Ajouter un nouveau jour'}
@@ -304,7 +304,7 @@ const AdminCareme2026 = () => {
                   </DialogHeader>
 
                   <div className="space-y-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="date">Date</Label>
                         <Input
@@ -430,7 +430,7 @@ const AdminCareme2026 = () => {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                            <DialogContent className="w-[95vw] sm:max-w-lg md:max-w-2xl\">
                             <DialogHeader>
                               <DialogTitle>{day.date}</DialogTitle>
                             </DialogHeader>

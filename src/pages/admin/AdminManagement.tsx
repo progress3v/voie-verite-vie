@@ -4,6 +4,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import AdminLoadingSpinner from '@/components/admin/AdminLoadingSpinner';
+import { AdminPageWrapper } from '@/components/admin/AdminPageWrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,23 +35,17 @@ interface AdminUser {
   role: 'admin_principal' | 'admin' | 'moderator';
 }
 
-const AdminManagement = () => {
+const AdminManagementContent = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, adminRole, loading: authLoading } = useAdmin();
+  const { user } = useAdmin();
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user || !isAdmin || adminRole !== 'admin_principal') {
-        navigate(adminRole ? '/admin' : '/');
-        return;
-      }
-      loadAdmins();
-    }
-  }, [user, isAdmin, adminRole, authLoading, navigate]);
+    loadAdmins();
+  }, []);
 
   const loadAdmins = async () => {
     try {
@@ -60,7 +55,10 @@ const AdminManagement = () => {
         .select('user_id, role')
         .in('role', ['admin_principal', 'admin', 'moderator'] as any);
 
-      if (!adminRoles) return;
+      if (!adminRoles || adminRoles.length === 0) {
+        setAdmins([]);
+        return;
+      }
 
       const userIds = adminRoles.map(r => r.user_id);
       const { data: profiles } = await supabase
@@ -79,6 +77,9 @@ const AdminManagement = () => {
       }) || [];
 
       setAdmins(adminUsers);
+    } catch (error) {
+      console.error('Error loading admins:', error);
+      setAdmins([]);
     } finally {
       setLoading(false);
     }
@@ -124,8 +125,7 @@ const AdminManagement = () => {
     }
   };
 
-  if (loading || authLoading) return <AdminLoadingSpinner />;
-  if (!user || !isAdmin || adminRole !== 'admin_principal') return null;
+  if (loading) return <AdminLoadingSpinner />;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -235,5 +235,11 @@ const AdminManagement = () => {
     </div>
   );
 };
+
+const AdminManagement = () => (
+  <AdminPageWrapper requiresPrincipal>
+    <AdminManagementContent />
+  </AdminPageWrapper>
+);
 
 export default AdminManagement;

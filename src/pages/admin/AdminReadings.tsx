@@ -155,7 +155,7 @@ const AdminReadings = () => {
                 <DialogTitle>{editingReading ? 'Modifier' : 'Ajouter'} une lecture</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input placeholder="Jour N°" type="number" value={formData.day_number} onChange={(e) => setFormData({...formData, day_number: e.target.value})} required />
                   <Input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} required />
                 </div>

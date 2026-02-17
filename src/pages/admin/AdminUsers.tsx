@@ -399,7 +399,7 @@ const AdminUsers = () => {
       </AlertDialog>
 
       <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-md md:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Gérer les permissions</DialogTitle>
             <DialogDescription>

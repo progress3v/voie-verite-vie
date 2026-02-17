@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { SettingsProvider } from "@/hooks/useSettings";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import LoadingScreen from "@/components/LoadingScreen";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,10 +44,12 @@ import AdminAI from "./pages/admin/AdminAI";
 import AdminCareme2026 from "./pages/admin/AdminCareme2026";
 import AdminCheminDeCroix from "./pages/admin/AdminCheminDeCroix";
 import AdminManagement from "./pages/admin/AdminManagement";
+import AdminRepair from "./pages/AdminRepair";
 import Profile from "./pages/Profile";
 import Creator from "./pages/Creator";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import AdminDiagnostics from "@/components/AdminDiagnostics";
 
 const queryClient = new QueryClient();
 
@@ -108,10 +111,11 @@ const App = () => {
             {isLoading && <LoadingScreen />}
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <AppNotificationInitializer>
-              <ScrollToTop />
-              <Routes>
+            <ErrorBoundary>
+              <BrowserRouter>
+                <AppNotificationInitializer>
+                  <ScrollToTop />
+                  <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/faq" element={<FAQ />} />
@@ -130,6 +134,7 @@ const App = () => {
               <Route path="/share-debug" element={<ShareDebug />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/createur" element={<Creator />} />
+              <Route path="/admin-repair" element={<AdminRepair />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/home" element={<AdminHome />} />
               <Route path="/admin/about" element={<AdminAbout />} />
@@ -149,8 +154,10 @@ const App = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-              </AppNotificationInitializer>
-            </BrowserRouter>
+                </AppNotificationInitializer>
+                <AdminDiagnostics />
+              </BrowserRouter>
+            </ErrorBoundary>
           </SettingsProvider>
         </TooltipProvider>
       </QueryClientProvider>

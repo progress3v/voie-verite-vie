@@ -1,8 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 
 export type AdminRole = 'admin_principal' | 'admin' | 'moderator' | null;
+
+// Cache local pour éviter de re-vérifier trop souvent
+const roleCache = new Map<string, { role: AdminRole; timestamp: number }>();
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes (réduit de 5)
+
+// Fonction globale pour réinitialiser le cache (utile pour debug)
+export const resetAdminCache = () => {
+  console.log('🔄 [useAdmin] Clearing role cache');
+  roleCache.clear();
+};
+
+// Expose debug functions to window
+if (typeof window !== 'undefined') {
+  (window as any).__DEBUG_resetAdminCache = resetAdminCache;
+}
 
 export const useAdmin = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -10,104 +25,149 @@ export const useAdmin = () => {
   const [adminRole, setAdminRole] = useState<AdminRole>(null);
   const [loading, setLoading] = useState(true);
   const [checked, setChecked] = useState(false);
+  const mountedRef = useRef(true);
+  const subscriptionRef = useRef<any>(null);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
 
-    const checkUserRoles = async (userId: string, email?: string) => {
-      try {
-        console.log('🔍 [useAdmin] Checking roles for user:', userId);
-        
-        // Query user roles first
-        console.log('📝 [useAdmin] Querying user_roles table...');
-        const { data: roles, error: queryError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId);
-        
-        if (!mounted) return;
-        
-        if (!mounted) return;
-        
-        console.log('✅ [useAdmin] Query returned');
-        
-        if (queryError) {
-          console.error('❌ [useAdmin] Query error:', queryError.message);
-          setIsAdmin(false);
-          setAdminRole(null);
-        } else {
-          // If superadmin with user role, fix it
-          if (email === 'ahdybau@gmail.com' && roles && roles.some((r: any) => r.role === 'user')) {
-            console.log('👑 [useAdmin] Superadmin detected with "user" role, fixing to admin_principal...');
-            
-            const { error: updateError } = await supabase
-              .from('user_roles')
-              .update({ role: 'admin_principal' })
-              .eq('user_id', userId);
-            
-            if (updateError) {
-              console.warn('⚠️ [useAdmin] Update failed:', updateError.message);
-            } else {
-              console.log('✅ [useAdmin] Role updated to admin_principal');
-              // Update local state to reflect the change
-              roles[0].role = 'admin_principal';
-            }
-          }
-          
-          handleRoles(roles);
-        }
-      } catch (err) {
-        console.error('❌ [useAdmin] Exception:', err);
-        setIsAdmin(false);
-        setAdminRole(null);
-      } finally {
-        if (mounted) {
+    const promiseWithTimeout = <T,>(p: Promise<T>, ms = 5000) => {
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timeout')), ms);
+      p.then((res) => {
+        clearTimeout(timer);
+        resolve(res);
+      }).catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
+  };
+
+  const checkUserRoles = async (userId: string, email?: string) => {
+    try {
+      console.log('🔍 [useAdmin] Checking roles for user:', userId);
+
+      // Check cache first
+      const cached = roleCache.get(userId);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log('💾 [useAdmin] Using cached role:', cached.role);
+        if (mountedRef.current) {
+          setIsAdmin(cached.role !== null);
+          setAdminRole(cached.role);
           setLoading(false);
           setChecked(true);
         }
-      }
-    };
-
-    const handleRoles = (roles: any[]) => {
-      console.log('📋 [useAdmin] Found', roles?.length || 0, 'role(s)');
-      
-      if (!roles || roles.length === 0) {
-        console.log('⚠️ [useAdmin] No roles');
-        setIsAdmin(false);
-        setAdminRole(null);
         return;
       }
 
-      console.log('📋 [useAdmin] Roles:', roles.map((r: any) => r.role).join(', '));
+      // Query user roles with retries + timeout
+      console.log('📝 [useAdmin] Querying user_roles table with retries...');
+      let attempts = 0;
+      let lastError: any = null;
+      let roles: any = null;
+
+      while (attempts < 3) {
+        attempts += 1;
+        try {
+          console.log(`⏱ [useAdmin] Attempt ${attempts} - querying user_roles`);
+          const res = await promiseWithTimeout(
+            supabase.from('user_roles').select('role').eq('user_id', userId),
+            4000
+          );
+          // supabase returns { data, error }
+          const { data, error } = res as any;
+          if (error) throw error;
+          roles = data;
+          lastError = null;
+          break;
+        } catch (e) {
+          console.warn(`⚠️ [useAdmin] Attempt ${attempts} failed:`, e?.message || e);
+          lastError = e;
+          // small backoff
+          await new Promise((r) => setTimeout(r, attempts * 300));
+        }
+      }
+
+      if (!mountedRef.current) return;
+
+      if (lastError) {
+        console.error('❌ [useAdmin] All attempts failed:', lastError);
+        // keep cached state if present, otherwise fail gracefully
+        setLoading(false);
+        setChecked(true);
+        return;
+      }
+
+      // If superadmin with user role, fix it
+      if (email === 'ahdybau@gmail.com' && roles && roles.some((r: any) => r.role === 'user')) {
+        console.log('👑 [useAdmin] Superadmin detected with "user" role, fixing to admin_principal...');
+
+        const { error: updateError } = await supabase
+          .from('user_roles')
+          .update({ role: 'admin_principal' })
+          .eq('user_id', userId);
+
+        if (!updateError) {
+          console.log('✅ [useAdmin] Role updated to admin_principal');
+          roles[0] = { ...roles[0], role: 'admin_principal' };
+        }
+      }
+
+      handleRoles(roles, userId);
+    } catch (err) {
+      console.error('❌ [useAdmin] Exception:', err);
+      // Don't reset on error
+      setLoading(false);
+      setChecked(true);
+    }
+  };
+
+    const handleRoles = (roles: any[], userId: string) => {
+      console.log('📋 [useAdmin] Found', roles?.length || 0, 'role(s)');
       
       let foundRole: AdminRole = null;
 
-      if (roles.some((r: any) => r.role === 'admin_principal')) {
-        foundRole = 'admin_principal';
-        console.log('👑 [useAdmin] Has admin_principal');
-      } else if (roles.some((r: any) => r.role === 'admin')) {
-        foundRole = 'admin';
-        console.log('🛡️ [useAdmin] Has admin');
-      } else if (roles.some((r: any) => r.role === 'moderator')) {
-        foundRole = 'moderator';
-        console.log('📢 [useAdmin] Has moderator');
+      if (roles && roles.length > 0) {
+        if (roles.some((r: any) => r.role === 'admin_principal')) {
+          foundRole = 'admin_principal';
+          console.log('👑 [useAdmin] Has admin_principal');
+        } else if (roles.some((r: any) => r.role === 'admin')) {
+          foundRole = 'admin';
+          console.log('🛡️ [useAdmin] Has admin');
+        } else if (roles.some((r: any) => r.role === 'moderator')) {
+          foundRole = 'moderator';
+          console.log('📢 [useAdmin] Has moderator');
+        }
       }
+
+      // Cache the result
+      roleCache.set(userId, { role: foundRole, timestamp: Date.now() });
 
       if (foundRole) {
         console.log('🎉 [useAdmin] isAdmin = TRUE, role = ' + foundRole);
-        setIsAdmin(true);
-        setAdminRole(foundRole);
+        if (mountedRef.current) {
+          setIsAdmin(true);
+          setAdminRole(foundRole);
+        }
       } else {
         console.log('❌ [useAdmin] No admin role found');
-        setIsAdmin(false);
-        setAdminRole(null);
+        if (mountedRef.current) {
+          setIsAdmin(false);
+          setAdminRole(null);
+        }
+      }
+      
+      if (mountedRef.current) {
+        setLoading(false);
+        setChecked(true);
       }
     };
 
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!mounted) return;
+      if (!mountedRef.current) return;
       
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -124,9 +184,10 @@ export const useAdmin = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
+        if (!mountedRef.current) return;
         
         const currentUser = session?.user ?? null;
+        console.log('🔄 [useAuth] Auth state changed:', event, currentUser?.id);
         setUser(currentUser);
         
         if (currentUser) {
@@ -141,9 +202,11 @@ export const useAdmin = () => {
       }
     );
 
+    subscriptionRef.current = subscription;
+
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
+      mountedRef.current = false;
+      subscription?.unsubscribe();
     };
   }, []);
 

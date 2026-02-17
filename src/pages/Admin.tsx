@@ -36,7 +36,7 @@ interface Stats {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, adminRole, loading } = useAdmin();
+  const { user, isAdmin, adminRole, loading, checked } = useAdmin();
   const [stats, setStats] = useState<Stats>({ users: 0, readings: 0, prayers: 0, messages: 0 });
 
   // Déterminer les sections à afficher
@@ -59,10 +59,15 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    // Only redirect if we're sure the user is not admin after loading is complete
+    if (loading) return;
+    
+    // Only redirect to home if user just logged out or is explicitly not admin
+    if (!user || (checked && !isAdmin)) {
+      console.log('⛔ [Admin] Redirecting - user:', !!user, 'isAdmin:', isAdmin, 'checked:', checked);
       navigate('/');
     }
-  }, [user, isAdmin, loading, navigate]);
+  }, [user, isAdmin, loading, checked, navigate]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -71,19 +76,24 @@ const Admin = () => {
   }, [isAdmin]);
 
   const loadStats = async () => {
-    const [usersRes, readingsRes, prayersRes, messagesRes] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('biblical_readings').select('*', { count: 'exact', head: true }),
-      supabase.from('prayer_requests').select('*', { count: 'exact', head: true }),
-      supabase.from('contact_messages').select('*', { count: 'exact', head: true })
-    ]);
-    
-    setStats({
-      users: usersRes.count || 0,
-      readings: readingsRes.count || 0,
-      prayers: prayersRes.count || 0,
-      messages: messagesRes.count || 0
-    });
+    try {
+      const [usersRes, readingsRes, prayersRes, messagesRes] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('biblical_readings').select('*', { count: 'exact', head: true }),
+        supabase.from('prayer_requests').select('*', { count: 'exact', head: true }),
+        supabase.from('contact_messages').select('*', { count: 'exact', head: true })
+      ]);
+      
+      setStats({
+        users: usersRes.count || 0,
+        readings: readingsRes.count || 0,
+        prayers: prayersRes.count || 0,
+        messages: messagesRes.count || 0
+      });
+    } catch (error) {
+      console.error('❌ Error loading stats:', error);
+      // Don't show error toast for stats - it's not critical
+    }
   };
 
   if (loading) {

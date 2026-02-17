@@ -135,7 +135,7 @@ const AdminFAQ = () => {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" /> Ajouter</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="w-[95vw] sm:max-w-lg md:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>{editingItem ? 'Modifier' : 'Ajouter'} une question</DialogTitle>
               </DialogHeader>
@@ -157,7 +157,7 @@ const AdminFAQ = () => {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Catégorie</Label>
                     <Input

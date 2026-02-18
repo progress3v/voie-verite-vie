@@ -169,8 +169,10 @@ const AdminCheminDeCroix = () => {
           stations: stations.sort((a, b) => a.number - b.number),
           conclusion: cheminDeCroixData.conclusion,
         },
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
+
+      console.log('💾 [AdminCheminDeCroix] Saving to DB - chemin-de-croix, stations count:', stations.length);
 
       if (programContent) {
         const { error } = await supabase
@@ -180,8 +182,9 @@ const AdminCheminDeCroix = () => {
 
         if (error) {
           toast.error('Erreur lors de la sauvegarde');
-          console.error('Error:', error);
+          console.error('❌ [AdminCheminDeCroix] Error:', error);
         } else {
+          console.log('✅ [AdminCheminDeCroix] Successfully updated chemin-de-croix, stations count:', stationsData.length);
           toast.success('Chemin de Croix sauvegardé avec succès');
           await loadContent();
         }
@@ -192,8 +195,9 @@ const AdminCheminDeCroix = () => {
 
         if (error) {
           toast.error('Erreur lors de la création');
-          console.error('Error:', error);
+          console.error('❌ [AdminCheminDeCroix] Error creating:', error);
         } else {
+          console.log('✅ [AdminCheminDeCroix] Successfully created chemin-de-croix');
           toast.success('Chemin de Croix créé avec succès');
           await loadContent();
         }
@@ -317,6 +321,7 @@ const AdminCheminDeCroix = () => {
                       {editingStation?.number ? `Modifier la station ${editingStation.number}` : 'Ajouter une nouvelle station'}
                     </DialogTitle>
                   </DialogHeader>
+                  <div className="sr-only">Formulaire pour {editingStation?.number ? 'modifier' : 'créer'} une station du Chemin de Croix</div>
 
                   <div className="space-y-4 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

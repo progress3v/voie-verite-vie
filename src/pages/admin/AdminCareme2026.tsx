@@ -193,6 +193,8 @@ const AdminCareme2026 = () => {
         updated_at: new Date().toISOString()
       };
 
+      console.log('💾 [AdminCareme] Saving to DB - careme-2026, days count:', daysData.length);
+
       if (programContent) {
         const { error } = await supabase
           .from('page_content')
@@ -201,8 +203,9 @@ const AdminCareme2026 = () => {
         
         if (error) {
           toast.error('Erreur lors de la sauvegarde');
-          console.error('Error:', error);
+          console.error('❌ [AdminCareme] Error:', error);
         } else {
+          console.log('✅ [AdminCareme] Successfully updated careme-2026');
           toast.success('Programme sauvegardé avec succès');
           await loadContent();
         }
@@ -213,15 +216,16 @@ const AdminCareme2026 = () => {
         
         if (error) {
           toast.error('Erreur lors de la création');
-          console.error('Error:', error);
+          console.error('❌ [AdminCareme] Error creating:', error);
         } else {
+          console.log('✅ [AdminCareme] Successfully created careme-2026');
           toast.success('Programme créé avec succès');
           await loadContent();
         }
       }
     } catch (err) {
       toast.error('Une erreur est survenue');
-      console.error('Error:', err);
+      console.error('❌ [AdminCareme] Error:', err);
     } finally {
       setSaving(false);
     }
@@ -302,6 +306,7 @@ const AdminCareme2026 = () => {
                       {editingDay?.id ? 'Modifier le jour' : 'Ajouter un nouveau jour'}
                     </DialogTitle>
                   </DialogHeader>
+                  <div className="sr-only">Formulaire pour {editingDay?.id ? 'modifier' : 'créer'} un jour du programme Carême 2026</div>
 
                   <div className="space-y-4 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

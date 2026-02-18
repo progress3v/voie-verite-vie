@@ -109,7 +109,9 @@ const AdminPrayers = () => {
             <DialogHeader>
               <DialogTitle>{selectedPrayer?.title}</DialogTitle>
             </DialogHeader>
-            <p className="text-muted-foreground whitespace-pre-wrap">{selectedPrayer?.content}</p>
+            <div>
+              <p className="text-muted-foreground whitespace-pre-wrap">{selectedPrayer?.content}</p>
+            </div>
           </DialogContent>
         </Dialog>
       </main>

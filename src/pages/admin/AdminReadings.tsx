@@ -154,6 +154,7 @@ const AdminReadings = () => {
               <DialogHeader>
                 <DialogTitle>{editingReading ? 'Modifier' : 'Ajouter'} une lecture</DialogTitle>
               </DialogHeader>
+              <div className="space-y-4 py-4">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input placeholder="Jour N°" type="number" value={formData.day_number} onChange={(e) => setFormData({...formData, day_number: e.target.value})} required />
@@ -165,6 +166,7 @@ const AdminReadings = () => {
                 <Textarea placeholder="Commentaire (optionnel)" value={formData.comment} onChange={(e) => setFormData({...formData, comment: e.target.value})} />
                 <Button type="submit" className="w-full">{editingReading ? 'Modifier' : 'Ajouter'}</Button>
               </form>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

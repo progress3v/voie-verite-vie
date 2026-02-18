@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronRight, ChevronLeft, Cross, Share2, Printer, BookOpen } from 'lucide-react';
 import { cheminDeCroixData } from '@/data/chemin-de-croix-data';
+import { supabase } from '@/integrations/supabase/client';
 import { generateShareImage, shareImage } from '@/lib/share-utils';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -127,6 +128,65 @@ const CheminDeCroix = memo(() => {
     toast.success(`✝️ Les 14 stations ont été téléchargées/partagées!`);
   };
 
+  const [contentData, setContentData] = useState<any>(null);
+
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        console.log('🔄 [CheminDeCroix] Loading content from DB for page_key=chemin-de-croix...');
+        const { data, error } = await supabase
+          .from('page_content')
+          .select('*')
+          .eq('page_key', 'chemin-de-croix')
+          .single();
+
+        if (error) {
+          console.warn('⚠️ [CheminDeCroix] Error loading content:', error.message);
+          return;
+        }
+
+        if (data?.content) {
+          console.log('✅ [CheminDeCroix] Content loaded, stations count:', data.content.stations?.length);
+          setContentData(data.content);
+        }
+      } catch (err) {
+        console.error('❌ [CheminDeCroix] Failed to load content:', err);
+      }
+    };
+    loadContent();
+  }, []);
+
+  // Force reload when page becomes visible (user returns from admin)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('📄 [CheminDeCroix] Page became visible, reloading content...');
+        const loadContent = async () => {
+          try {
+            const { data, error } = await supabase
+              .from('page_content')
+              .select('*')
+              .eq('page_key', 'chemin-de-croix')
+              .single();
+
+            if (data?.content && !error) {
+              console.log('✅ [CheminDeCroix] Content reloaded on visibility');
+              setContentData(data.content);
+            }
+          } catch (err) {
+            console.warn('⚠️ [CheminDeCroix] Reload failed:', err);
+          }
+        };
+        loadContent();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  const effective = contentData || cheminDeCroixData;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:bg-slate-950 dark:text-slate-100">
       <Navigation />
@@ -155,16 +215,16 @@ const CheminDeCroix = memo(() => {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
         </div>
         <div className="container mx-auto relative z-10">
-          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-4">
             <Cross className="w-8 h-8 text-purple-200" />
-            <span className="text-sm font-semibold text-purple-200">{cheminDeCroixData.intro.community}</span>
+            <span className="text-sm font-semibold text-purple-200">{effective.intro.community}</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">{cheminDeCroixData.intro.title}</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">{effective.intro.title}</h1>
           <p className="text-base sm:text-lg text-purple-100 mb-3">
-            {cheminDeCroixData.intro.subtitle}
+            {effective.intro.subtitle}
           </p>
-          <p className="text-sm italic text-purple-200 mb-4 max-w-2xl">{cheminDeCroixData.intro.verse}</p>
-          <p className="text-sm text-purple-150">⏱️ Durée : {cheminDeCroixData.intro.duration}</p>
+          <p className="text-sm italic text-purple-200 mb-4 max-w-2xl">{effective.intro.verse}</p>
+          <p className="text-sm text-purple-150">⏱️ Durée : {effective.intro.duration}</p>
         </div>
       </header>
 
@@ -184,7 +244,7 @@ const CheminDeCroix = memo(() => {
               </CardHeader>
               <CardContent className="pt-6">
                 <p className="text-sm leading-relaxed whitespace-pre-line text-gray-700">
-                  {cheminDeCroixData.intro.introduction}
+                  {effective.intro.introduction}
                 </p>
               </CardContent>
             </Card>
@@ -213,7 +273,7 @@ const CheminDeCroix = memo(() => {
           {/* Stations Tab */}
           <TabsContent value="stations" className="space-y-4">
             <div className="grid gap-3 md:gap-4">
-              {cheminDeCroixData.stations.map((station, idx) => (
+              {effective.stations.map((station, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedStation(station)}
@@ -235,8 +295,8 @@ const CheminDeCroix = memo(() => {
                         </div>
                         <ChevronRight className="w-5 h-5 text-purple-600 flex-shrink-0 mt-1" />
                       </div>
-                      <p className="text-xs italic text-purple-700 leading-tight">
-                        {cheminDeCroixData.adoration}
+                          <p className="text-xs italic text-purple-700 leading-tight">
+                        {effective.adoration}
                       </p>
                     </CardContent>
                   </Card>

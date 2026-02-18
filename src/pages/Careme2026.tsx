@@ -68,31 +68,51 @@ const Careme2026 = memo(() => {
 
   const loadContent = useCallback(async () => {
     try {
-      const { data } = await supabase
+      console.log('🔄 [Careme2026] Loading content from DB for page_key=careme-2026...');
+      const { data, error } = await supabase
         .from('page_content')
         .select('*')
         .eq('page_key', 'careme-2026')
         .single();
 
+      if (error) {
+        console.warn('⚠️ [Careme2026] Error loading content:', error.message);
+        return;
+      }
+
       if (data?.content) {
+        console.log('✅ [Careme2026] Content loaded successfully, days count:', data.content.days?.length);
         setContentData(data.content);
+      } else {
+        console.warn('⚠️ [Careme2026] No content data found, using fallback');
       }
     } catch (err) {
-      console.error('Failed to load content', err);
+      console.error('❌ [Careme2026] Failed to load content:', err);
     }
   }, []);
 
   const loadUserProgress = useCallback(async () => {
     if (!user) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_program_progress')
         .select('date')
         .eq('user_id', user.id)
         .eq('program_key', 'careme-2026');
+
+      if (error?.code === 'PGRST116' || error?.status === 404) {
+        console.warn('⚠️ user_program_progress table not found (404). This table may not exist yet on this deployment.');
+        return;
+      }
+
+      if (error) {
+        console.warn('⚠️ Error loading user progress:', error.message);
+        return;
+      }
+
       setCompletedDates((data || []).map((r: any) => r.date));
     } catch (err) {
-      console.error('Failed to load progress', err);
+      console.warn('⚠️ Failed to load progress:', err);
     }
   }, [user]);
 
@@ -257,6 +277,19 @@ const Careme2026 = memo(() => {
     loadContent();
     loadUserProgress();
   }, [user, loadContent, loadUserProgress]);
+
+  // Force reload when page becomes visible (user returns from admin)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('📄 [Careme2026] Page became visible, reloading content...');
+        loadContent();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [loadContent]);
 
   const nonSundayDays = allDays.filter((d: any) => !isSunday(d));
   const completionRate = nonSundayDays.length > 0 

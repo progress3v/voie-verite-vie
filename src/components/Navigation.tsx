@@ -53,7 +53,7 @@ const Navigation = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdmin();
   const { settings, setTheme, isDarkMode } = useSettings();
   const navigate = useNavigate();
@@ -187,7 +187,7 @@ const Navigation = () => {
               Installer
             </Button>
 
-            {user ? (
+            {authLoading ? <div className="w-12" /> : (user ? (
               <>
                 {isAdmin && (
                   <Button
@@ -229,7 +229,7 @@ const Navigation = () => {
                   Rejoignez-nous
                 </Button>
               </>
-            )}
+            ))}
           </div>
 
           {/* Menu Mobile - Sheet à droite */}

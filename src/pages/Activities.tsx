@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -51,9 +52,11 @@ const Activities = () => {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const { user } = useAuth();
+
   useEffect(() => {
     loadActivities();
-  }, []);
+  }, [user]);
 
   const loadActivities = async () => {
     setLoading(true);
@@ -64,7 +67,9 @@ const Activities = () => {
       .order('date', { ascending: true });
     
     if (data && !error) {
-      setActivities(data);
+      // If the visitor is not authenticated, show only the "principal" category
+      const visible = user ? data : data.filter(a => (a.category || '').toLowerCase() === 'principal');
+      setActivities(visible);
       // Load registration counts
       const counts: Record<string, number> = {};
       for (const activity of data) {
@@ -318,7 +323,7 @@ const Activities = () => {
                   </TabsList>
 
                   <TabsContent value="upcoming">
-                    {filteredUpcomingActivities.length > 0 ? (
+                      {filteredUpcomingActivities.length > 0 ? (
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredUpcomingActivities.map((activity) => renderActivityCard(activity, false))}
                       </div>
@@ -357,6 +362,13 @@ const Activities = () => {
             </div>
           </div>
         </section>
+        {!user && (
+          <div className="container mx-auto px-4 mt-6">
+            <div className="max-w-6xl mx-auto text-center text-sm text-muted-foreground">
+              Pour voir les autres activités, veuillez vous inscrire ou vous connecter (si vous avez changé d'appareil).
+            </div>
+          </div>
+        )}
       </main>
 
       <ActivityRegistrationModal

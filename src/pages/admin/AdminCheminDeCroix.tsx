@@ -108,30 +108,94 @@ const AdminCheminDeCroix = () => {
     });
   };
 
-  const addOrUpdateStation = () => {
+  const addOrUpdateStation = async () => {
     if (!editingStation || !editingStation.title) {
       toast.error('Veuillez remplir au moins le titre');
       return;
     }
 
-    setStations(prev => {
-      const existingIndex = prev.findIndex(s => s.number === editingStation.number);
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = editingStation;
-        return updated;
+    // Update local state first
+    const updatedStations = stations.map(s => 
+      s.number === editingStation.number ? editingStation : s
+    );
+    
+    // If new station, add it
+    if (!stations.some(s => s.number === editingStation.number)) {
+      updatedStations.push(editingStation);
+    }
+
+    // Sort by number
+    updatedStations.sort((a, b) => a.number - b.number);
+    setStations(updatedStations);
+
+    // Auto-save to database immediately
+    console.log('💾 [Admin] Auto-saving station to database...');
+    try {
+      const contentData = {
+        community: formData.community,
+        verse: formData.verse,
+        duration: formData.duration,
+        stations: updatedStations,
+        conclusion: cheminDeCroixData.conclusion,
+      };
+
+      const { error: updateError } = await supabase
+        .from('page_content')
+        .update({
+          content: contentData,
+          title: formData.community,
+          updated_at: new Date().toISOString()
+        })
+        .eq('page_key', 'chemin-de-croix');
+
+      if (!updateError) {
+        console.log('✅ [Admin] Station auto-saved to database!');
+      } else {
+        console.warn('⚠️ [Admin] Auto-save failed:', updateError);
       }
-      return [...prev, editingStation].sort((a, b) => a.number - b.number);
-    });
+    } catch (err) {
+      console.error('❌ [Admin] Auto-save error:', err);
+    }
 
     setEditingStation(null);
     setShowStationDialog(false);
     toast.success(editingStation.number ? 'Station mise à jour' : 'Station ajoutée');
   };
 
-  const deleteStation = (number: number) => {
+  const deleteStation = async (number: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette station ?')) {
-      setStations(prev => prev.filter(s => s.number !== number));
+      const updatedStations = stations.filter(s => s.number !== number);
+      setStations(updatedStations);
+
+      // Auto-save to database immediately
+      console.log('💾 [Admin] Auto-saving deletion to database...');
+      try {
+        const contentData = {
+          community: formData.community,
+          verse: formData.verse,
+          duration: formData.duration,
+          stations: updatedStations,
+          conclusion: cheminDeCroixData.conclusion,
+        };
+
+        const { error: updateError } = await supabase
+          .from('page_content')
+          .update({
+            content: contentData,
+            title: formData.community,
+            updated_at: new Date().toISOString()
+          })
+          .eq('page_key', 'chemin-de-croix');
+
+        if (!updateError) {
+          console.log('✅ [Admin] Deletion auto-saved to database!');
+        } else {
+          console.warn('⚠️ [Admin] Auto-save failed:', updateError);
+        }
+      } catch (err) {
+        console.error('❌ [Admin] Auto-save error:', err);
+      }
+
       toast.success('Station supprimée');
     }
   };

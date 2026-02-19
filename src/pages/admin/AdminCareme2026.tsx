@@ -135,30 +135,82 @@ const AdminCareme2026 = () => {
     }
   };
 
-  const addOrUpdateDay = () => {
+  const addOrUpdateDay = async () => {
     if (!editingDay || !editingDay.date) {
       toast.error('Veuillez remplir au moins la date');
       return;
     }
 
-    setDaysData(prev => {
-      const existingIndex = prev.findIndex(d => d.date === editingDay.date);
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = editingDay;
-        return updated;
+    // Update local state first
+    const updatedDays = daysData.map(d => 
+      d.date === editingDay.date ? editingDay : d
+    );
+    
+    // If new day, add it
+    if (!daysData.some(d => d.date === editingDay.date)) {
+      updatedDays.push(editingDay);
+    }
+
+    setDaysData(updatedDays);
+
+    // Auto-save to database immediately
+    console.log('💾 [Admin] Auto-saving day to database...');
+    try {
+      const contentData = { days: updatedDays };
+      
+      const { error: updateError } = await supabase
+        .from('page_content')
+        .update({
+          content: contentData,
+          title: formData.title,
+          subtitle: formData.subtitle,
+          updated_at: new Date().toISOString()
+        })
+        .eq('page_key', 'careme-2026');
+
+      if (!updateError) {
+        console.log('✅ [Admin] Day auto-saved to database!');
+      } else {
+        console.warn('⚠️ [Admin] Auto-save failed:', updateError);
       }
-      return [...prev, editingDay];
-    });
+    } catch (err) {
+      console.error('❌ [Admin] Auto-save error:', err);
+    }
 
     setEditingDay(null);
     setShowDayDialog(false);
     toast.success(editingDay.id ? 'Jour mis à jour' : 'Jour ajouté');
   };
 
-  const deleteDay = (date: string) => {
+  const deleteDay = async (date: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce jour ?')) {
-      setDaysData(prev => prev.filter(d => d.date !== date));
+      const updatedDays = daysData.filter(d => d.date !== date);
+      setDaysData(updatedDays);
+
+      // Auto-save to database immediately
+      console.log('💾 [Admin] Auto-saving deletion to database...');
+      try {
+        const contentData = { days: updatedDays };
+        
+        const { error: updateError } = await supabase
+          .from('page_content')
+          .update({
+            content: contentData,
+            title: formData.title,
+            subtitle: formData.subtitle,
+            updated_at: new Date().toISOString()
+          })
+          .eq('page_key', 'careme-2026');
+
+        if (!updateError) {
+          console.log('✅ [Admin] Deletion auto-saved to database!');
+        } else {
+          console.warn('⚠️ [Admin] Auto-save failed:', updateError);
+        }
+      } catch (err) {
+        console.error('❌ [Admin] Auto-save error:', err);
+      }
+
       toast.success('Jour supprimé');
     }
   };

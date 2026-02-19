@@ -43,6 +43,8 @@ import AdminFAQ from "./pages/admin/AdminFAQ";
 import AdminAI from "./pages/admin/AdminAI";
 import AdminCareme2026 from "./pages/admin/AdminCareme2026";
 import AdminCheminDeCroix from "./pages/admin/AdminCheminDeCroix";
+import AdminDebugCareme from "./pages/admin/AdminDebugCareme";
+import AdminTestSave from "./pages/admin/AdminTestSave";
 import AdminManagement from "./pages/admin/AdminManagement";
 import AdminRepair from "./pages/AdminRepair";
 import Profile from "./pages/Profile";
@@ -141,6 +143,8 @@ const App = () => {
               <Route path="/admin/author" element={<AdminAuthor />} />
               <Route path="/admin/design" element={<AdminDesign />} />
               <Route path="/admin/careme2026" element={<AdminCareme2026 />} />
+              <Route path="/admin/debug-careme" element={<AdminDebugCareme />} />
+              <Route path="/admin/test-save" element={<AdminTestSave />} />
               <Route path="/admin/chemin-de-croix" element={<AdminCheminDeCroix />} />
               <Route path="/admin/activities" element={<AdminActivities />} />
               <Route path="/admin/readings" element={<AdminReadings />} />

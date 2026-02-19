@@ -35,6 +35,29 @@ const Careme2026 = memo(() => {
     }))
   );
 
+  // Debug: log which data source is being used
+  useEffect(() => {
+    console.log('📊 [Careme2026] Data source check:');
+    console.log('  contentData:', contentData);
+    console.log('  contentData?.days?.length:', contentData?.days?.length);
+    console.log('  Using DB data:', !!contentData?.days);
+    console.log('  All days count:', allDays.length);
+  }, [contentData, allDays]);
+
+  // Group days by week for calendar display
+  const weekGroups = contentData ? 
+    // Group BD data by week title
+    allDays.reduce((acc: any, day: any) => {
+      const lastWeek = acc[acc.length - 1];
+      if (lastWeek && lastWeek.title === day.weekTitle) {
+        lastWeek.days.push(day);
+      } else {
+        acc.push({ title: day.weekTitle, days: [day], range: '' });
+      }
+      return acc;
+    }, [])
+    : caremeData.fullProgram;
+
   const toIsoDate = (d: Date) => d.toISOString().slice(0, 10);
   const parseDateFromLabel = (label: string): Date | null => {
     const months: Record<string, number> = {
@@ -276,6 +299,37 @@ const Careme2026 = memo(() => {
   useEffect(() => {
     loadContent();
     loadUserProgress();
+    
+    // Subscribe to real-time changes on page_content table
+    console.log('📡 [Careme2026] Setting up real-time subscription for careme-2026...');
+    const subscription = supabase
+      .channel(`page_content_careme_${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'page_content',
+          filter: `page_key=eq.careme-2026`
+        },
+        (payload: any) => {
+          console.log('🔔 [Careme2026] Real-time update received, event:', payload.eventType);
+          // Reload content when it changes
+          if (payload.new?.content?.days) {
+            console.log('✅ [Careme2026] Updating with fresh data from real-time event');
+            setContentData(payload.new.content);
+          } else {
+            loadContent();
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔗 [Careme2026] Subscription status:', status);
+      });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user, loadContent, loadUserProgress]);
 
   // Force reload when page becomes visible (user returns from admin)
@@ -493,7 +547,7 @@ const Careme2026 = memo(() => {
             </div>
 
             <div className="space-y-4">
-              {caremeData.fullProgram.map((week, weekIdx) => (
+              {weekGroups.map((week: any, weekIdx: number) => (
                 <Card key={weekIdx} className="border-violet-100">
                   <CardHeader className="bg-gradient-to-r from-violet-50 to-violet-100/50 pb-3 dark:bg-gradient-to-r dark:from-violet-950 dark:to-violet-900/50">
                     <div className="flex items-center justify-between gap-2">

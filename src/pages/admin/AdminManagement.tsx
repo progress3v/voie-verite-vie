@@ -87,6 +87,13 @@ const AdminManagementContent = () => {
 
   const updateAdminRole = async (userId: string, newRole: 'admin' | 'moderator') => {
     try {
+      // Find admin and prevent changing principal admin
+      const adminToUpdate = admins.find(a => a.id === userId);
+      if (adminToUpdate?.email === 'ahdybau@gmail.com') {
+        toast.error('Impossible de modifier le rôle du créateur de l\'application');
+        return;
+      }
+      
       // Supprimer l'ancien rôle
       await supabase.from('user_roles').delete().eq('user_id', userId);
       
@@ -104,6 +111,14 @@ const AdminManagementContent = () => {
   const deleteAdmin = async () => {
     if (!selectedAdminId) return;
     try {
+      // Find admin and prevent deleting principal admin
+      const adminToDelete = admins.find(a => a.id === selectedAdminId);
+      if (adminToDelete?.email === 'ahdybau@gmail.com') {
+        toast.error('Impossible de retirer les droits admin du créateur de l\'application');
+        setDeleteDialogOpen(false);
+        return;
+      }
+      
       // Supprimer le rôle admin
       await supabase.from('user_roles').delete().eq('user_id', selectedAdminId);
       
@@ -182,10 +197,10 @@ const AdminManagementContent = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="flex gap-2">
-                        {!isCurrentUser && (admin.role as any) !== 'admin_principal' && (
+                        {!isCurrentUser && admin.role !== 'admin_principal' && (
                           <>
                             <Select 
-                              value={(admin.role as any) === 'admin_principal' ? 'admin' : admin.role}
+                              value={admin.role === 'admin_principal' ? 'admin' : admin.role}
                               onValueChange={(newRole: any) => updateAdminRole(admin.id, newRole)}
                             >
                               <SelectTrigger className="w-[150px]">
@@ -200,6 +215,11 @@ const AdminManagementContent = () => {
                               size="sm" 
                               variant="destructive"
                               onClick={() => {
+                                // Prevent deletion of admin_principal
+                                if (admin.email === 'ahdybau@gmail.com') {
+                                  toast.error('Impossible de retirer les droits admin du créateur');
+                                  return;
+                                }
                                 setSelectedAdminId(admin.id);
                                 setDeleteDialogOpen(true);
                               }}

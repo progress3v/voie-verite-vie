@@ -67,43 +67,32 @@ const AdminAbout = () => {
     e.preventDefault();
     setSaving(true);
 
-    const updateData = {
-      title: formData.title,
-      subtitle: formData.subtitle,
-      content: {
-        founder: formData.founder,
-        vision: formData.vision,
-        history: formData.history,
-        mission: formData.mission
-      },
-      updated_at: new Date().toISOString()
+    const contentData = {
+      founder: formData.founder,
+      vision: formData.vision,
+      history: formData.history,
+      mission: formData.mission
     };
 
-    if (pageContent) {
-      const { error } = await supabase
-        .from('page_content')
-        .update(updateData)
-        .eq('id', pageContent.id);
-      
-      if (error) {
+    try {
+      const { error: rpcError } = await supabase.rpc('update_page_content_data', {
+        p_page_key: 'about',
+        p_content: contentData
+      });
+
+      if (rpcError) {
         toast.error('Erreur lors de la sauvegarde');
+        console.error('RPC Error:', rpcError);
       } else {
         toast.success('Contenu sauvegardé');
+        await loadContent();
       }
-    } else {
-      const { error } = await supabase
-        .from('page_content')
-        .insert({ ...updateData, page_key: 'about' });
-      
-      if (error) {
-        toast.error('Erreur lors de la création');
-      } else {
-        toast.success('Contenu créé');
-        loadContent();
-      }
+    } catch (err) {
+      toast.error('Une erreur est survenue');
+      console.error('Error:', err);
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   if (loading) return <AdminLoadingSpinner />;

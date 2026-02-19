@@ -30,7 +30,7 @@ export const caremeData = {
           readings: 'Is 58,1-9a / Ps 50 / Mt 9,14-15',
           actions: {
             soi: "Ne publier aucun contenu négatif sur les réseaux sociaux aujourd'hui",
-            prochain: "Partager mon repas avec un sans-abri",
+            prochain: "Faire une œuvre de miséricorde corporelle",
             dieu: "Chemin de Croix complet",
           },
         },

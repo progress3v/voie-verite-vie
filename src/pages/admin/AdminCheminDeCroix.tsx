@@ -159,48 +159,57 @@ const AdminCheminDeCroix = () => {
     setSaving(true);
 
     try {
-      const updateData = {
-        title: formData.title,
-        subtitle: formData.subtitle,
-        content: {
-          community: formData.community,
-          verse: formData.verse,
-          duration: formData.duration,
-          stations: stations.sort((a, b) => a.number - b.number),
-          conclusion: cheminDeCroixData.conclusion,
-        },
-        updated_at: new Date().toISOString()
+      const contentData = {
+        community: formData.community,
+        verse: formData.verse,
+        duration: formData.duration,
+        stations: stations.sort((a, b) => a.number - b.number),
+        conclusion: cheminDeCroixData.conclusion,
       };
 
-      console.log('💾 [AdminCheminDeCroix] Saving to DB - chemin-de-croix, stations count:', stations.length);
+      console.log('💾 [AdminCheminDeCroix] Saving via RPC - chemin-de-croix, stations count:', stations.length);
+      console.log('📋 [AdminCheminDeCroix] First station being saved:', stations[0]);
 
-      if (programContent) {
-        const { error } = await supabase
+      // Call the RPC function instead of direct update
+      const { error: rpcError, data: rpcData } = await supabase.rpc('update_page_content_data', {
+        p_page_key: 'chemin-de-croix',
+        p_content: contentData
+      });
+
+      if (rpcError) {
+        toast.error('Erreur lors de la sauvegarde');
+        console.error('❌ [AdminCheminDeCroix] RPC Error:', rpcError);
+        setSaving(false);
+        return;
+      }
+      
+      console.log('✅ [AdminCheminDeCroix] RPC succeeded:', rpcData);
+      toast.success('Chemin de Croix sauvegardé avec succès');
+      
+      // Wait a bit for DB to settle
+      await new Promise(r => setTimeout(r, 1000));
+      
+      // Try to reload
+      console.log('🔄 [AdminCheminDeCroix] Reloading content...');
+      try {
+        const { data: freshData, error: loadError } = await supabase
           .from('page_content')
-          .update(updateData as any)
-          .eq('id', programContent.id);
-
-        if (error) {
-          toast.error('Erreur lors de la sauvegarde');
-          console.error('❌ [AdminCheminDeCroix] Error:', error);
-        } else {
-          console.log('✅ [AdminCheminDeCroix] Successfully updated chemin-de-croix, stations count:', stationsData.length);
-          toast.success('Chemin de Croix sauvegardé avec succès');
-          await loadContent();
+          .select('*')
+          .eq('page_key', 'chemin-de-croix')
+          .single();
+        
+        if (loadError) {
+          console.warn('⚠️ [AdminCheminDeCroix] Load error:', loadError);
+        } else if (freshData) {
+          console.log('✅ [AdminCheminDeCroix] Fresh data loaded:', freshData.content?.stations?.length, 'stations');
+          setProgramContent(freshData as CheminProgram);
+          if (freshData.content?.stations) {
+            setStations(freshData.content.stations as Station[]);
+            console.log('✅ [AdminCheminDeCroix] UI updated with fresh data');
+          }
         }
-      } else {
-        const { error } = await supabase
-          .from('page_content')
-          .insert({ ...updateData, page_key: 'chemin-de-croix' } as any);
-
-        if (error) {
-          toast.error('Erreur lors de la création');
-          console.error('❌ [AdminCheminDeCroix] Error creating:', error);
-        } else {
-          console.log('✅ [AdminCheminDeCroix] Successfully created chemin-de-croix');
-          toast.success('Chemin de Croix créé avec succès');
-          await loadContent();
-        }
+      } catch (reloadErr) {
+        console.error('❌ [AdminCheminDeCroix] Reload failed:', reloadErr);
       }
     } catch (err) {
       toast.error('Une erreur est survenue');

@@ -33,23 +33,23 @@ const CheminDeCroix = memo(() => {
     }
   };
 
-  const goToNextStation = () => {
+  const goToNextStation = (stations: any[]) => {
     if (!selectedStation) return;
-    const currentIndex = cheminDeCroixData.stations.findIndex(s => s.number === selectedStation.number);
-    if (currentIndex < cheminDeCroixData.stations.length - 1) {
-      setSelectedStation(cheminDeCroixData.stations[currentIndex + 1]);
+    const currentIndex = stations.findIndex(s => s.number === selectedStation.number);
+    if (currentIndex < stations.length - 1) {
+      setSelectedStation(stations[currentIndex + 1]);
     }
   };
 
-  const goToPreviousStation = () => {
+  const goToPreviousStation = (stations: any[]) => {
     if (!selectedStation) return;
-    const currentIndex = cheminDeCroixData.stations.findIndex(s => s.number === selectedStation.number);
+    const currentIndex = stations.findIndex(s => s.number === selectedStation.number);
     if (currentIndex > 0) {
-      setSelectedStation(cheminDeCroixData.stations[currentIndex - 1]);
+      setSelectedStation(stations[currentIndex - 1]);
     }
   };
 
-  const shareStation = async () => {
+  const shareStation = async (adoration: string) => {
     if (!selectedStation) return;
     try {
       console.log('🔄 Génération image pour:', selectedStation.title);
@@ -62,7 +62,7 @@ const CheminDeCroix = memo(() => {
         text: station.text,
         meditation: station.meditation,
         prayer: station.prayer,
-        adoration: cheminDeCroixData.adoration,
+        adoration: adoration,
         number: station.number,
         type: 'station',
       });
@@ -83,9 +83,7 @@ const CheminDeCroix = memo(() => {
       alert('❌ Erreur lors du partage');
     }
   };
-  const shareAllStations = async () => {
-    const stations = cheminDeCroixData.stations;
-    
+  const shareAllStations = async (stations: any[], adoration: string) => {
     if (stations.length === 0) {
       alert('Aucune station à partager');
       return;
@@ -154,6 +152,37 @@ const CheminDeCroix = memo(() => {
       }
     };
     loadContent();
+    
+    // Subscribe to real-time changes
+    console.log('📡 [CheminDeCroix] Setting up real-time subscription for chemin-de-croix...');
+    const subscription = supabase
+      .channel(`page_content_chemin_${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'page_content',
+          filter: `page_key=eq.chemin-de-croix`
+        },
+        (payload: any) => {
+          console.log('🔔 [CheminDeCroix] Real-time update received, event:', payload.eventType);
+          // Reload content when it changes
+          if (payload.new?.content?.stations) {
+            console.log('✅ [CheminDeCroix] Updating with fresh data from real-time event');
+            setContentData(payload.new.content);
+          } else {
+            loadContent();
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔗 [CheminDeCroix] Subscription status:', status);
+      });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Force reload when page becomes visible (user returns from admin)
@@ -261,7 +290,7 @@ const CheminDeCroix = memo(() => {
                 </Button>
               </div>
               <Button 
-                onClick={shareAllStations} 
+                onClick={() => shareAllStations(effective.stations, effective.adoration)} 
                 className="w-full gap-2 bg-purple-600 hover:bg-purple-700"
               >
                 <Share2 className="w-4 h-4" />
@@ -381,7 +410,7 @@ const CheminDeCroix = memo(() => {
             {/* Share Button & Navigation Buttons */}
             <div className="flex gap-2 pt-4 border-t">
               <Button 
-                onClick={goToPreviousStation} 
+                onClick={() => goToPreviousStation(effective.stations)} 
                 disabled={selectedStation?.number === 1}
                 className="flex-1 bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-1"
               >
@@ -390,7 +419,7 @@ const CheminDeCroix = memo(() => {
               </Button>
               
               <Button 
-                onClick={shareStation}
+                onClick={() => shareStation(effective.adoration)}
                 className="flex-1 bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-1"
               >
                 <Share2 className="h-4 w-4 flex-shrink-0" />
@@ -407,7 +436,7 @@ const CheminDeCroix = memo(() => {
               </Button>
 
               <Button 
-                onClick={goToNextStation} 
+                onClick={() => goToNextStation(effective.stations)} 
                 disabled={selectedStation?.number === 14}
                 className="flex-1 bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-1"
               >

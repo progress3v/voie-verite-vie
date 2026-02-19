@@ -6,7 +6,7 @@ export type AdminRole = 'admin_principal' | 'admin' | 'moderator' | null;
 
 // Cache local pour éviter de re-vérifier trop souvent
 const roleCache = new Map<string, { role: AdminRole; timestamp: number }>();
-const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes (réduit de 5)
+const CACHE_DURATION = 30 * 1000; // 30 secondes pour plus de réactivité
 
 // Fonction globale pour réinitialiser le cache (utile pour debug)
 export const resetAdminCache = () => {
@@ -99,18 +99,29 @@ export const useAdmin = () => {
         return;
       }
 
-      // If superadmin with user role, fix it
-      if (email === 'ahdybau@gmail.com' && roles && roles.some((r: any) => r.role === 'user')) {
-        console.log('👑 [useAdmin] Superadmin detected with "user" role, fixing to admin_principal...');
-
-        const { error: updateError } = await supabase
-          .from('user_roles')
-          .update({ role: 'admin_principal' })
-          .eq('user_id', userId);
-
-        if (!updateError) {
-          console.log('✅ [useAdmin] Role updated to admin_principal');
-          roles[0] = { ...roles[0], role: 'admin_principal' };
+      // Ensure ahdybau@gmail.com is always admin_principal
+      if (email === 'ahdybau@gmail.com') {
+        console.log('👑 [useAdmin] Principal admin detected (ahdybau@gmail.com), ensuring admin_principal role...');
+        
+        // Check if they have admin_principal role
+        const hasAdminPrincipal = roles && roles.some((r: any) => r.role === 'admin_principal');
+        
+        if (!hasAdminPrincipal) {
+          // Delete all existing roles and set admin_principal
+          console.log('👑 [useAdmin] Setting ahdybau@gmail.com as admin_principal...');
+          
+          await supabase.from('user_roles').delete().eq('user_id', userId);
+          
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert({ user_id: userId, role: 'admin_principal' });
+          
+          if (!insertError) {
+            console.log('✅ [useAdmin] ahdybau@gmail.com confirmed as admin_principal');
+            roles = [{ role: 'admin_principal' }];
+          } else {
+            console.error('❌ [useAdmin] Failed to set admin_principal:', insertError);
+          }
         }
       }
 

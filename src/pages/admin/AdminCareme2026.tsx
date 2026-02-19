@@ -184,44 +184,53 @@ const AdminCareme2026 = () => {
     setSaving(true);
 
     try {
-      const updateData = {
-        title: formData.title,
-        subtitle: formData.subtitle,
-        content: {
-          days: daysData
-        },
-        updated_at: new Date().toISOString()
+      const contentData = {
+        days: daysData
       };
 
-      console.log('💾 [AdminCareme] Saving to DB - careme-2026, days count:', daysData.length);
+      console.log('💾 [AdminCareme] Saving via RPC - careme-2026, days count:', daysData.length);
+      console.log('📋 [AdminCareme] First day being saved:', daysData[0]);
 
-      if (programContent) {
-        const { error } = await supabase
+      // Call the RPC function instead of direct update
+      const { error: rpcError, data: rpcData } = await supabase.rpc('update_page_content_data', {
+        p_page_key: 'careme-2026',
+        p_content: contentData
+      });
+      
+      if (rpcError) {
+        toast.error('Erreur lors de la sauvegarde');
+        console.error('❌ [AdminCareme] RPC Error:', rpcError);
+        setSaving(false);
+        return;
+      }
+      
+      console.log('✅ [AdminCareme] RPC succeeded:', rpcData);
+      toast.success('Programme sauvegardé avec succès');
+      
+      // Wait a bit for DB to settle
+      await new Promise(r => setTimeout(r, 1000));
+      
+      // Reload content to confirm
+      console.log('🔄 [AdminCareme] Reloading content...');
+      try {
+        const { data: freshData, error: loadError } = await supabase
           .from('page_content')
-          .update(updateData as any)
-          .eq('id', programContent.id);
+          .select('*')
+          .eq('page_key', 'careme-2026')
+          .single();
         
-        if (error) {
-          toast.error('Erreur lors de la sauvegarde');
-          console.error('❌ [AdminCareme] Error:', error);
-        } else {
-          console.log('✅ [AdminCareme] Successfully updated careme-2026');
-          toast.success('Programme sauvegardé avec succès');
-          await loadContent();
+        if (loadError) {
+          console.warn('⚠️ [AdminCareme] Load error:', loadError);
+        } else if (freshData) {
+          console.log('✅ [AdminCareme] Fresh data loaded:', freshData.content?.days?.length, 'days');
+          setProgramContent(freshData as CaremeProgram);
+          if (freshData.content?.days) {
+            setDaysData(freshData.content.days as CaremDay[]);
+            console.log('✅ [AdminCareme] UI updated with fresh data');
+          }
         }
-      } else {
-        const { error } = await supabase
-          .from('page_content')
-          .insert({ ...updateData, page_key: 'careme-2026' } as any);
-        
-        if (error) {
-          toast.error('Erreur lors de la création');
-          console.error('❌ [AdminCareme] Error creating:', error);
-        } else {
-          console.log('✅ [AdminCareme] Successfully created careme-2026');
-          toast.success('Programme créé avec succès');
-          await loadContent();
-        }
+      } catch (reloadErr) {
+        console.error('❌ [AdminCareme] Reload failed:', reloadErr);
       }
     } catch (err) {
       toast.error('Une erreur est survenue');
@@ -435,7 +444,7 @@ const AdminCareme2026 = () => {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                            <DialogContent className="w-[95vw] sm:max-w-lg md:max-w-2xl\">
+                            <DialogContent className="w-[95vw] sm:max-w-lg md:max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>{day.date}</DialogTitle>
                             </DialogHeader>

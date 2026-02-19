@@ -167,24 +167,50 @@ const AdminCheminDeCroix = () => {
         conclusion: cheminDeCroixData.conclusion,
       };
 
-      console.log('💾 [AdminCheminDeCroix] Saving via RPC - chemin-de-croix, stations count:', stations.length);
+      console.log('💾 [AdminCheminDeCroix] Saving - chemin-de-croix, stations count:', stations.length);
       console.log('📋 [AdminCheminDeCroix] First station being saved:', stations[0]);
 
-      // Call the RPC function instead of direct update
-      const { error: rpcError, data: rpcData } = await supabase.rpc('update_page_content_data', {
-        p_page_key: 'chemin-de-croix',
-        p_content: contentData
-      });
+      let saveSuccess = false;
 
-      if (rpcError) {
-        toast.error('Erreur lors de la sauvegarde');
-        console.error('❌ [AdminCheminDeCroix] RPC Error:', rpcError);
+      // Try: First attempt with UPDATE (direct save to table)
+      console.log('📝 [AdminCheminDeCroix] Attempting direct table UPDATE...');
+      const { error: updateError } = await supabase
+        .from('page_content')
+        .update({
+          content: contentData,
+          title: 'Chemin de Croix',
+          subtitle: '14 stations de méditation',
+          updated_at: new Date().toISOString()
+        })
+        .eq('page_key', 'chemin-de-croix');
+
+      if (!updateError) {
+        console.log('✅ [AdminCheminDeCroix] Direct UPDATE succeeded');
+        saveSuccess = true;
+      } else {
+        console.warn('⚠️ [AdminCheminDeCroix] Direct UPDATE failed, trying RPC as fallback');
+        
+        // Fallback: Try RPC if direct update fails
+        const { error: rpcError } = await supabase.rpc('update_page_content_data', {
+          p_page_key: 'chemin-de-croix',
+          p_content: contentData
+        });
+
+        if (!rpcError) {
+          console.log('✅ [AdminCheminDeCroix] RPC succeeded');
+          saveSuccess = true;
+        } else {
+          console.error('❌ [AdminCheminDeCroix] Both UPDATE and RPC failed:', rpcError);
+          toast.error('Erreur lors de la sauvegarde. Vérifiez que la table page_content existe.');
+        }
+      }
+
+      if (!saveSuccess) {
         setSaving(false);
         return;
       }
       
-      console.log('✅ [AdminCheminDeCroix] RPC succeeded:', rpcData);
-      toast.success('Chemin de Croix sauvegardé avec succès');
+      toast.success('Chemin de Croix sauvegardé! ✓');
       
       // Wait a bit for DB to settle
       await new Promise(r => setTimeout(r, 1000));
@@ -205,7 +231,7 @@ const AdminCheminDeCroix = () => {
           setProgramContent(freshData as CheminProgram);
           if (freshData.content?.stations) {
             setStations(freshData.content.stations as Station[]);
-            console.log('✅ [AdminCheminDeCroix] UI updated with fresh data');
+            console.log('✅ [AdminCheminDeCroix] UI updated with fresh data from DB');
           }
         }
       } catch (reloadErr) {

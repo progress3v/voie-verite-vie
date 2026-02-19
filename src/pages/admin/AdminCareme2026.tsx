@@ -188,24 +188,50 @@ const AdminCareme2026 = () => {
         days: daysData
       };
 
-      console.log('💾 [AdminCareme] Saving via RPC - careme-2026, days count:', daysData.length);
+      console.log('💾 [AdminCareme] Saving - careme-2026, days count:', daysData.length);
       console.log('📋 [AdminCareme] First day being saved:', daysData[0]);
 
-      // Call the RPC function instead of direct update
-      const { error: rpcError, data: rpcData } = await supabase.rpc('update_page_content_data', {
-        p_page_key: 'careme-2026',
-        p_content: contentData
-      });
-      
-      if (rpcError) {
-        toast.error('Erreur lors de la sauvegarde');
-        console.error('❌ [AdminCareme] RPC Error:', rpcError);
+      let saveSuccess = false;
+
+      // Try: First attempt with UPDATE (direct save to table)
+      console.log('📝 [AdminCareme] Attempting direct table UPDATE...');
+      const { error: updateError } = await supabase
+        .from('page_content')
+        .update({
+          content: contentData,
+          title: formData.title,
+          subtitle: formData.subtitle,
+          updated_at: new Date().toISOString()
+        })
+        .eq('page_key', 'careme-2026');
+
+      if (!updateError) {
+        console.log('✅ [AdminCareme] Direct UPDATE succeeded');
+        saveSuccess = true;
+      } else {
+        console.warn('⚠️ [AdminCareme] Direct UPDATE failed, trying RPC as fallback');
+        
+        // Fallback: Try RPC if direct update fails
+        const { error: rpcError } = await supabase.rpc('update_page_content_data', {
+          p_page_key: 'careme-2026',
+          p_content: contentData
+        });
+        
+        if (!rpcError) {
+          console.log('✅ [AdminCareme] RPC succeeded');
+          saveSuccess = true;
+        } else {
+          console.error('❌ [AdminCareme] Both UPDATE and RPC failed:', rpcError);
+          toast.error('Erreur lors de la sauvegarde. Vérifiez que la table page_content existe.');
+        }
+      }
+
+      if (!saveSuccess) {
         setSaving(false);
         return;
       }
-      
-      console.log('✅ [AdminCareme] RPC succeeded:', rpcData);
-      toast.success('Programme sauvegardé avec succès');
+
+      toast.success('Programme sauvegardé! ✓');
       
       // Wait a bit for DB to settle
       await new Promise(r => setTimeout(r, 1000));
@@ -226,7 +252,7 @@ const AdminCareme2026 = () => {
           setProgramContent(freshData as CaremeProgram);
           if (freshData.content?.days) {
             setDaysData(freshData.content.days as CaremDay[]);
-            console.log('✅ [AdminCareme] UI updated with fresh data');
+            console.log('✅ [AdminCareme] UI updated with fresh data from DB');
           }
         }
       } catch (reloadErr) {

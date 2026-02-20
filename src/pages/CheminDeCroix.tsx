@@ -14,6 +14,7 @@ const CheminDeCroix = memo(() => {
   const [selectedStation, setSelectedStation] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('intro');
   const [sharingProgress, setSharingProgress] = useState<{ current: number, total: number } | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
   const { toast } = useToast();
 
   const printPage = () => window.print();
@@ -151,39 +152,45 @@ const CheminDeCroix = memo(() => {
         console.error('❌ [CheminDeCroix] Failed to load content:', err);
       }
     };
+    
     loadContent();
     
-    // Subscribe to real-time changes
-    console.log('📡 [CheminDeCroix] Setting up real-time subscription for chemin-de-croix...');
-    const subscription = supabase
-      .channel(`page_content_chemin_${Date.now()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'page_content',
-          filter: `page_key=eq.chemin-de-croix`
-        },
-        (payload: any) => {
-          console.log('🔔 [CheminDeCroix] Real-time update received, event:', payload.eventType);
-          // Reload content when it changes
-          if (payload.new?.content?.stations) {
-            console.log('✅ [CheminDeCroix] Updating with fresh data from real-time event');
-            setContentData(payload.new.content);
-          } else {
-            loadContent();
+    // ✨ FIX: Use stable channel ID instead of Date.now()
+    if (!subscription) {
+      console.log('📡 [CheminDeCroix] Setting up real-time subscription for chemin-de-croix...');
+      const sub = supabase
+        .channel('chemin_de_croix_updates') // ← Stable ID!
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'page_content',
+            filter: `page_key=eq.chemin-de-croix`
+          },
+          (payload: any) => {
+            console.log('🔔 [CheminDeCroix] Real-time update received, event:', payload.eventType);
+            if (payload.new?.content?.stations) {
+              console.log('✅ [CheminDeCroix] Updating with fresh data from real-time event');
+              setContentData(payload.new.content);
+            } else {
+              loadContent();
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        console.log('🔗 [CheminDeCroix] Subscription status:', status);
-      });
+        )
+        .subscribe((status) => {
+          console.log('🔗 [CheminDeCroix] Subscription status:', status);
+        });
+      
+      setSubscription(sub);
+    }
     
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
-  }, []);
+  }, [subscription]);
 
   // Force reload when page becomes visible (user returns from admin)
   useEffect(() => {

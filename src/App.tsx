@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { initNotificationsAutomatically, initNotificationClickHandler } from "@/lib/notification-service";
 import { initChangeNotificationSystem, sendDailyWelcomeNotification } from "@/lib/change-notification-system";
+import { initializeNotificationScheduler } from "@/services/notification-scheduler";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Activities from "./pages/Activities";
@@ -46,12 +47,15 @@ import AdminCheminDeCroix from "./pages/admin/AdminCheminDeCroix";
 import AdminDebugCareme from "./pages/admin/AdminDebugCareme";
 import AdminTestSave from "./pages/admin/AdminTestSave";
 import AdminManagement from "./pages/admin/AdminManagement";
+import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminNotificationScheduler from "./pages/admin/AdminNotificationScheduler";
 import AdminRepair from "./pages/AdminRepair";
 import Profile from "./pages/Profile";
 import Creator from "./pages/Creator";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import AdminDiagnostics from "@/components/AdminDiagnostics";
+import NotificationInitializer from "@/components/NotificationInitializer";
 
 const queryClient = new QueryClient();
 
@@ -92,7 +96,22 @@ const AppNotificationInitializer = ({ children }: { children: React.ReactNode })
     };
   }, [user?.id]); // Ajouter user.id comme dépendance, pas tout le user object
 
-  return <>{children}</>;
+  // Initialiser le scheduler de notifications automatiques
+  useEffect(() => {
+    try {
+      initializeNotificationScheduler(false); // mode debug désactivé en prod
+      console.log('✅ Notification Scheduler initialisé');
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation du scheduler:', error);
+    }
+  }, []); // Une seule fois au montage
+
+  return (
+    <>
+      <NotificationInitializer />
+      {children}
+    </>
+  );
 };
 
 const App = () => {
@@ -153,6 +172,8 @@ const App = () => {
               <Route path="/admin/faq" element={<AdminFAQ />} />
               <Route path="/admin/contact" element={<AdminContact />} />
               <Route path="/admin/ai" element={<AdminAI />} />
+              <Route path="/admin/notifications" element={<AdminNotifications />} />
+              <Route path="/admin/notification-scheduler" element={<AdminNotificationScheduler />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/admins" element={<AdminManagement />} />
               <Route path="/profile" element={<Profile />} />

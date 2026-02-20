@@ -23,6 +23,7 @@ const Careme2026 = memo(() => {
   const [contentData, setContentData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [sharingProgress, setSharingProgress] = useState<{ current: number, total: number } | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
 
   // Flatten all days
   const allDays = contentData?.days || caremeData.fullProgram.flatMap((week: any) =>
@@ -300,37 +301,42 @@ const Careme2026 = memo(() => {
     loadContent();
     loadUserProgress();
     
-    // Subscribe to real-time changes on page_content table
-    console.log('📡 [Careme2026] Setting up real-time subscription for careme-2026...');
-    const subscription = supabase
-      .channel(`page_content_careme_${Date.now()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'page_content',
-          filter: `page_key=eq.careme-2026`
-        },
-        (payload: any) => {
-          console.log('🔔 [Careme2026] Real-time update received, event:', payload.eventType);
-          // Reload content when it changes
-          if (payload.new?.content?.days) {
-            console.log('✅ [Careme2026] Updating with fresh data from real-time event');
-            setContentData(payload.new.content);
-          } else {
-            loadContent();
+    // ✨ FIX: Use stable channel ID instead of Date.now()
+    if (!subscription) {
+      console.log('📡 [Careme2026] Setting up real-time subscription for careme-2026...');
+      const sub = supabase
+        .channel('careme_2026_updates') // ← Stable ID!
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'page_content',
+            filter: `page_key=eq.careme-2026`
+          },
+          (payload: any) => {
+            console.log('🔔 [Careme2026] Real-time update received, event:', payload.eventType);
+            if (payload.new?.content?.days) {
+              console.log('✅ [Careme2026] Updating with fresh data from real-time event');
+              setContentData(payload.new.content);
+            } else {
+              loadContent();
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        console.log('🔗 [Careme2026] Subscription status:', status);
-      });
+        )
+        .subscribe((status) => {
+          console.log('🔗 [Careme2026] Subscription status:', status);
+        });
+      
+      setSubscription(sub);
+    }
     
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
-  }, [user, loadContent, loadUserProgress]);
+  }, [user, loadContent, loadUserProgress, subscription]);
 
   // Force reload when page becomes visible (user returns from admin)
   useEffect(() => {

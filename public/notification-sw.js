@@ -21,7 +21,7 @@ self.addEventListener('push', (event) => {
     icon: '/logo-3v.png',
     tag: 'default',
     silent: false,
-    requireInteraction: false,
+    requireInteraction: true, // ✨ Les notifications restent visibles jusqu'à action utilisateur
   };
 
   if (event.data) {
@@ -39,7 +39,7 @@ self.addEventListener('push', (event) => {
       badge: data.badge,
       icon: data.icon,
       tag: data.tag,
-      requireInteraction: data.requireInteraction ?? false,
+      requireInteraction: data.requireInteraction, // ✨ Reste visible jusqu'à action
       silent: data.silent ?? false,
       vibrate: data.vibrate || [200, 100, 200],
       data: data,

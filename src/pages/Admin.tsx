@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import FixSuperadminRole from '@/components/admin/FixSuperadminRole';
 import { 
   Home, Info, Calendar, BookOpen, MessageSquare, 
-  Image, HelpCircle, Mail, Bot, Settings, Users, Shield, Flame, Cross, User, Palette
+  Image, HelpCircle, Mail, Bot, Settings, Users, Shield, Flame, Cross, User, Palette, Bell, Clock
 } from 'lucide-react';
 
 const adminSections = [
@@ -23,6 +23,8 @@ const adminSections = [
   { title: 'Galerie', description: 'Gérer les images', icon: Image, path: '/admin/gallery' },
   { title: 'FAQ', description: 'Gérer les questions', icon: HelpCircle, path: '/admin/faq' },
   { title: 'Contact', description: 'Voir les messages', icon: Mail, path: '/admin/contact' },
+  { title: 'Notifications', description: 'Envoyer des notifications persistentes', icon: Bell, path: '/admin/notifications' },
+  { title: 'Scheduler', description: 'Gérer les notifications automatiques', icon: Clock, path: '/admin/notification-scheduler' },
   { title: 'Assistant IA', description: 'Configurer l\'IA', icon: Bot, path: '/admin/ai' },
   { title: 'Utilisateurs', description: 'Gérer les utilisateurs', icon: Users, path: '/admin/users' },
 ];

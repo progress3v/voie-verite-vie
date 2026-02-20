@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, X, Check, BookOpen, Calendar, MessageCircle, Info } from 'lucide-react';
+import { Bell, X, Check, BookOpen, Calendar, MessageCircle, Info, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -10,21 +10,28 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useBroadcastNotifications } from '@/hooks/useBroadcastNotifications';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-interface Notification {
+interface UserNotification {
   id: string;
   title: string;
-  message: string;
+  body: string;
   type: string;
-  link: string | null;
+  icon: string | null;
+  data: Record<string, any> | null;
   is_read: boolean;
+  viewed_at: string | null;
   created_at: string;
 }
 
 const typeIcons: Record<string, React.ReactNode> = {
+  greeting: <MessageCircle className="w-4 h-4 text-yellow-500" />,
+  reminder: <AlertCircle className="w-4 h-4 text-orange-500" />,
+  announcement: <Info className="w-4 h-4 text-blue-500" />,
+  update: <BookOpen className="w-4 h-4 text-green-500" />,
   reading: <BookOpen className="w-4 h-4 text-primary" />,
   activity: <Calendar className="w-4 h-4 text-blue-500" />,
   prayer: <MessageCircle className="w-4 h-4 text-purple-500" />,
@@ -32,10 +39,14 @@ const typeIcons: Record<string, React.ReactNode> = {
 };
 
 export const NotificationBell = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Initialize broadcast notifications listener
+  useBroadcastNotifications();
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -43,19 +54,43 @@ export const NotificationBell = () => {
     if (user) {
       loadNotifications();
       
-      // Subscribe to realtime notifications
+      // Subscribe to realtime notifications from broadcast system
       const channel = supabase
-        .channel('notifications')
+        .channel(`user_notifications:${user.id}`)
         .on(
           'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'notifications',
+            table: 'user_notifications',
             filter: `user_id=eq.${user.id}`,
           },
           (payload) => {
-            setNotifications(prev => [payload.new as Notification, ...prev]);
+            const newNotification = payload.new as UserNotification;
+            setNotifications(prev => [newNotification, ...prev]);
+            
+            // Show browser notification if enabled
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(newNotification.title, {
+                body: newNotification.body,
+                icon: newNotification.icon || '/logo.png',
+              });
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'user_notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            const updatedNotification = payload.new as UserNotification;
+            setNotifications(prev =>
+              prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
+            );
           }
         )
         .subscribe();
@@ -69,56 +104,77 @@ export const NotificationBell = () => {
   const loadNotifications = async () => {
     if (!user) return;
     
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
-    
-    if (data) {
-      setNotifications(data);
+    try {
+      const { data, error } = await supabase
+        .from('user_notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
+      if (data) {
+        setNotifications(data as UserNotification[]);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const markAsRead = async (id: string) => {
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', id);
-    
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, is_read: true } : n)
-    );
+    try {
+      const { error } = await supabase.rpc('mark_notification_read', {
+        p_notification_id: id
+      });
+      
+      if (error) throw error;
+      
+      setNotifications(prev =>
+        prev.map(n => n.id === id ? { ...n, is_read: true, viewed_at: new Date().toISOString() } : n)
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   const markAllAsRead = async () => {
     if (!user) return;
     
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', user.id)
-      .eq('is_read', false);
-    
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, is_read: true }))
-    );
+    try {
+      const unreadIds = notifications
+        .filter(n => !n.is_read)
+        .map(n => n.id);
+      
+      for (const id of unreadIds) {
+        await markAsRead(id);
+      }
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
   };
 
   const deleteNotification = async (id: string) => {
-    await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', id);
-    
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    try {
+      const { error } = await supabase
+        .from('user_notifications')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: UserNotification) => {
     markAsRead(notification.id);
-    if (notification.link) {
-      navigate(notification.link);
+    
+    // Handle action link from data
+    if (notification.data?.action_url) {
+      navigate(notification.data.action_url);
       setIsOpen(false);
     }
   };
@@ -140,9 +196,9 @@ export const NotificationBell = () => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-3 border-b">
-          <h3 className="font-semibold text-sm">Notifications</h3>
+      <PopoverContent className="w-96 p-0" align="end">
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
+          <h3 className="font-semibold text-base">Notifications</h3>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
@@ -156,19 +212,28 @@ export const NotificationBell = () => {
           )}
         </div>
         
-        <ScrollArea className="h-[300px]">
-          {notifications.length === 0 ? (
+        <ScrollArea className="h-[400px]">
+          {isLoading ? (
+            <div className="p-6 text-center text-muted-foreground text-sm">
+              <div className="animate-spin">
+                <Bell className="w-6 h-6 mx-auto opacity-50" />
+              </div>
+              <p className="mt-2">Chargement...</p>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground text-sm">
               <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              Aucune notification
+              <p>Aucune notification</p>
             </div>
           ) : (
             <div className="divide-y">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors ${
-                    !notification.is_read ? 'bg-primary/5' : ''
+                  className={`p-4 hover:bg-muted/60 cursor-pointer transition-all border-l-4 group ${
+                    !notification.is_read 
+                      ? 'bg-primary/8 border-l-primary' 
+                      : 'border-l-transparent hover:border-l-muted'
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
@@ -177,15 +242,20 @@ export const NotificationBell = () => {
                       {typeIcons[notification.type] || typeIcons.info}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate ${
-                        !notification.is_read ? 'text-foreground' : 'text-muted-foreground'
-                      }`}>
-                        {notification.title}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-semibold ${
+                          !notification.is_read ? 'text-foreground' : 'text-muted-foreground'
+                        }`}>
+                          {notification.title}
+                        </p>
+                        {!notification.is_read && (
+                          <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5"></div>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                        {notification.body}
                       </p>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground/70 mt-1">
+                      <p className="text-xs text-muted-foreground/70 mt-2">
                         {formatDistanceToNow(new Date(notification.created_at), {
                           addSuffix: true,
                           locale: fr,
@@ -195,7 +265,7 @@ export const NotificationBell = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100"
+                      className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteNotification(notification.id);
